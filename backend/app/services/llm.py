@@ -4,44 +4,7 @@ import json
 import random
 
 # Extended Mock response to meet new requirements
-MOCK_QUESTIONS = [
-    # 5 Java Questions
-    {"category": "Java", "type": "mcq", "text": "Which of these is not a Java feature?", "options": ["Object-oriented", "Use of pointers", "Portable", "Dynamic"], "correct_answer": "Use of pointers"},
-    {"category": "Java", "type": "mcq", "text": "What is the return type of the hashCode() method in the Object class?", "options": ["Object", "int", "long", "void"], "correct_answer": "int"},
-    {"category": "Java", "type": "mcq", "text": "Which exception is thrown when a divide by zero occurs?", "options": ["ArithmeticException", "NullPointerException", "ClassCastException", "IndexOutOfBoundsException"], "correct_answer": "ArithmeticException"},
-    {"category": "Java", "type": "mcq", "text": "Which keyword is used to prevent method overriding?", "options": ["static", "constant", "final", "protected"], "correct_answer": "final"},
-    {"category": "Java", "type": "mcq", "text": "What is the size of int variable?", "options": ["8 bit", "16 bit", "32 bit", "64 bit"], "correct_answer": "32 bit"},
-
-    # 5 DSA Questions
-    {"category": "DSA", "type": "mcq", "text": "What is the time complexity of binary search?", "options": ["O(n)", "O(log n)", "O(n^2)", "O(1)"], "correct_answer": "O(log n)"},
-    {"category": "DSA", "type": "mcq", "text": "Which data structure is used for recursion?", "options": ["Queue", "Stack", "Linked List", "Tree"], "correct_answer": "Stack"},
-    {"category": "DSA", "type": "mcq", "text": "What is the worst case time complexity of Quick Sort?", "options": ["O(n log n)", "O(n^2)", "O(n)", "O(log n)"], "correct_answer": "O(n^2)"},
-    {"category": "DSA", "type": "mcq", "text": "Which of the following is a linear data structure?", "options": ["Tree", "Graph", "Array", "AVL Tree"], "correct_answer": "Array"},
-    {"category": "DSA", "type": "mcq", "text": "In a stack, if a user tries to remove an element from an empty stack it is called?", "options": ["Underflow", "Empty collection", "Overflow", "Garbage collection"], "correct_answer": "Underflow"},
-
-    # 5 OOPs Questions (Replaced Frontend)
-    {"category": "OOPs", "type": "mcq", "text": "Which concept allows a class to derive properties from another class?", "options": ["Polymorphism", "Inheritance", "Encapsulation", "Abstraction"], "correct_answer": "Inheritance"},
-    {"category": "OOPs", "type": "mcq", "text": "Which of these is an access modifier?", "options": ["protected", "void", "static", "final"], "correct_answer": "protected"},
-    {"category": "OOPs", "type": "mcq", "text": "What is the process of hiding internal details and showing only functionality?", "options": ["Encapsulation", "Abstraction", "Polymorphism", "Inheritance"], "correct_answer": "Abstraction"},
-    {"category": "OOPs", "type": "mcq", "text": "Which feature of OOP illustrated the code reusability?", "options": ["Polymorphism", "Abstraction", "Inheritance", "Encapsulation"], "correct_answer": "Inheritance"},
-    {"category": "OOPs", "type": "mcq", "text": "Method overloading is an example of?", "options": ["Runtime Polymorphism", "Compile time Polymorphism", "Encapsulation", "Inheritance"], "correct_answer": "Compile time Polymorphism"},
-
-    # 1 Subjective Question
-    {"category": "Subjective", "type": "subjective", "text": "Explain the concept of Virtual DOM in React.", "options": [], "correct_answer": "The Virtual DOM is a lightweight copy of the actual DOM. React uses it to improve performance by updating only the changed parts of the real DOM."}
-]
-
-MOCK_INTERVIEW_QUESTIONS = [
-    "Can you explain the difference between a process and a thread?",
-    "What are the ACID properties in a database?",
-    "Explain the concept of polymorphism in Object-Oriented Programming.",
-    "How does a hash map work internally?",
-    "What is the difference between TCP and UDP?",
-    "Explain the concept of dependency injection.",
-    "What is a REST API and what are its key constraints?",
-    "How do you handle state management in a complex application?",
-    "What is the difference between authentication and authorization?",
-    "Can you describe a challenging technical problem you solved recently?"
-]
+# Mock data removed to enforce strict API usage
 
 def clean_json_response(content: str):
     """
@@ -64,13 +27,61 @@ def clean_json_response(content: str):
         
     return content
 
+# ... (imports remain the same)
+
+def is_valid_api_key():
+    """
+    Checks if a valid API key is configured.
+    Returns True if key exists and is not a placeholder.
+    """
+    key = settings.OPENAI_API_KEY
+    if not key:
+        return False
+    
+    # Check for common placeholders
+    placeholders = [
+        "INSERT_YOUR", 
+        "sk-proj-your", 
+        "CHANGE_THIS", 
+        "YOUR_API_KEY"
+    ]
+    
+    if any(p in key for p in placeholders):
+        return False
+        
+    return True
+
+# ... (imports remain the same)
+
+def is_valid_api_key():
+    """
+    Checks if a valid API key is configured.
+    Returns True if key exists and is not a placeholder.
+    """
+    key = settings.OPENAI_API_KEY
+    if not key:
+        return False
+    
+    # Check for common placeholders
+    placeholders = [
+        "INSERT_YOUR", 
+        "sk-proj-your", 
+        "CHANGE_THIS", 
+        "YOUR_API_KEY"
+    ]
+    
+    if any(p in key for p in placeholders):
+        return False
+        
+    return True
+
 def generate_daily_questions():
     """
     Generates 5 MCQs and 1 Subjective question using the LLM.
+    Raises Exception if generation fails (No Mock Data).
     """
-    if not settings.OPENAI_API_KEY or settings.OPENAI_API_KEY.startswith("INSERT_YOUR"):
-        # Fallback if key is not set yet
-        return MOCK_QUESTIONS
+    if not is_valid_api_key():
+        raise Exception("OpenAI API Key is missing or invalid. Please configure it in .env to generate questions.")
 
     try:
         from openai import OpenAI
@@ -123,7 +134,7 @@ def generate_daily_questions():
                 import ast
                 questions = ast.literal_eval(cleaned_content)
             except:
-                return MOCK_QUESTIONS
+                raise Exception("Failed to parse LLM response for questions.")
 
         # Post-processing to ensure categories are set
         if isinstance(questions, list):
@@ -138,15 +149,19 @@ def generate_daily_questions():
         return questions
         
     except Exception as e:
+        error_msg = str(e)
+        if "429" in error_msg:
+            print(f"Rate Limit Exceeded: {error_msg}")
+            raise Exception("API Rate Limit Exceeded. Please check your API quota or try again later.")
         print(f"Error generating daily questions: {e}")
-        return MOCK_QUESTIONS
+        raise e # Re-raise to prevent fallback
 
 def generate_coding_problem():
     """
     Generates a random coding problem (Easy/Medium/Hard) using LLM.
     Returns an error object if generation fails (No Fallbacks).
     """
-    if not settings.OPENAI_API_KEY or settings.OPENAI_API_KEY.startswith("INSERT_YOUR"):
+    if not is_valid_api_key():
         return {
             "id": 1,
             "title": "API Key Missing",
@@ -216,6 +231,15 @@ def generate_coding_problem():
             return problem
             
         except Exception as e:
+            error_msg = str(e)
+            if "429" in error_msg:
+                return {
+                    "id": 1,
+                    "title": "Rate Limit Exceeded",
+                    "description": "Your API key has hit its rate limit. Please check your quota or try again later.",
+                    "difficulty": "Error",
+                    "test_cases": []
+                }
             print(f"Attempt {attempt+1} error: {e}")
             continue
 
@@ -233,38 +257,8 @@ def evaluate_code(code: str, language: str, problem_title: str):
     Simulates code execution and validation using LLM.
     """
     # Check if key is missing or is the default placeholder
-    if not settings.OPENAI_API_KEY or settings.OPENAI_API_KEY.startswith("sk-proj-your") or settings.OPENAI_API_KEY == "CHANGE_THIS_TO_A_SECURE_RANDOM_STRING":
-        # Fallback mock logic for demo without API key
-        
-        # 1. Basic Length Check
-        if len(code.strip()) < 10:
-             return {"status": "error", "output": f"Error: Code is too short to be a valid solution."}
-
-        # 2. Language-Specific Syntax Checks
-        if language.lower() == "python":
-            import ast
-            try:
-                ast.parse(code)
-            except SyntaxError as e:
-                return {"status": "error", "output": f"SyntaxError: {e}"}
-            
-            # Check for required logic keywords (naive check)
-            if "return" not in code:
-                 return {"status": "error", "output": "LogicError: Solution must return a value."}
-
-        elif language.lower() in ["java", "cpp"]:
-            if "return" not in code or ";" not in code:
-                return {"status": "error", "output": f"SyntaxError: Missing 'return' statement or semicolons in {language} code."}
-            if "class" not in code and language == "java":
-                 return {"status": "error", "output": "SyntaxError: Java solution must be within a class."}
-
-        # 3. Random "Runtime" Error for realism if code looks okay but is just random words
-        # (This is still a mock, so we can't actually run it, but this helps catch gibberish)
-        common_keywords = ["def", "class", "int", "void", "vector", "import", "include"]
-        if not any(keyword in code for keyword in common_keywords):
-             return {"status": "error", "output": "CompilerError: Code does not appear to contain valid programming constructs."}
-
-        return {"status": "success", "output": "Demo Mode (No API Key):\nTest Case 1: Passed\nTest Case 2: Passed\n(Note: Logic not fully verified without OpenAI Key)"}
+    if not is_valid_api_key():
+        return {"status": "error", "output": "API Key missing. Cannot evaluate code."}
 
     try:
         from openai import OpenAI
@@ -315,6 +309,9 @@ def evaluate_code(code: str, language: str, problem_title: str):
         return json.loads(cleaned_content)
             
     except Exception as e:
+        error_msg = str(e)
+        if "429" in error_msg:
+             return {"status": "error", "output": "API Rate Limit Exceeded. Please check your quota."}
         print(f"Error evaluating code: {e}")
         return {"status": "error", "output": f"Evaluation Failed: {str(e)}"}
 
@@ -323,12 +320,8 @@ def generate_interview_followup(history: list, job_description: str, resume_text
     Generates a follow-up interview question based on chat history and context.
     Uses a staged approach: Intro -> Role Fit -> Experience -> Technical -> Conclusion.
     """
-    # Fallback function to get a random question
-    def get_fallback_question():
-        return random.choice(MOCK_INTERVIEW_QUESTIONS) + " (Demo Mode)"
-
-    if not settings.OPENAI_API_KEY or settings.OPENAI_API_KEY.startswith("sk-proj-your") or settings.OPENAI_API_KEY == "CHANGE_THIS_TO_A_SECURE_RANDOM_STRING":
-        return get_fallback_question()
+    if not is_valid_api_key():
+        return "Error: AI Interviewer is offline (API Key missing)."
 
     try:
         from openai import OpenAI
@@ -381,19 +374,22 @@ def generate_interview_followup(history: list, job_description: str, resume_text
         
         return response.choices[0].message.content
     except Exception as e:
+        error_msg = str(e)
+        if "429" in error_msg:
+            return "Error: API Rate Limit Exceeded. Please check your system configuration."
         print(f"Error generating interview response: {e}")
-        return "I apologize, but I am having trouble connecting to my brain right now. Please check the system configuration."
+        return f"Error: {str(e)}"
 
 def generate_interview_feedback(history: list, job_description: str):
     """
     Analyzes the interview history and generates a detailed feedback report.
     """
-    if not settings.OPENAI_API_KEY or settings.OPENAI_API_KEY.startswith("sk-proj-your") or settings.OPENAI_API_KEY == "CHANGE_THIS_TO_A_SECURE_RANDOM_STRING":
+    if not is_valid_api_key():
         return {
-            "score": 85,
-            "strengths": ["Good communication", "Basic knowledge of concepts"],
-            "weaknesses": ["Could go deeper into technical details", "Answers were a bit short"],
-            "summary": "A good initial interview. The candidate showed promise but needs to demonstrate more depth in specific technical areas related to the role."
+            "score": 0,
+            "strengths": ["API Key Missing"],
+            "weaknesses": ["Cannot generate feedback"],
+            "summary": "Please configure a valid API key to receive feedback."
         }
 
     try:
@@ -447,6 +443,14 @@ def generate_interview_feedback(history: list, job_description: str):
             }
             
     except Exception as e:
+        error_msg = str(e)
+        if "429" in error_msg:
+            return {
+                "score": 0,
+                "strengths": ["Rate Limit Exceeded"],
+                "weaknesses": ["Please check API quota"],
+                "summary": "Could not generate feedback due to API rate limits."
+            }
         print(f"Error generating feedback: {e}")
         # Return error state so frontend knows it failed
         return {

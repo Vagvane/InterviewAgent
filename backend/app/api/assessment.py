@@ -43,7 +43,10 @@ def get_daily_assessment(
         # If has_general is True, we fall through to generate new questions (Auto-heal)
 
     # Generate new questions
-    questions_data = llm.generate_daily_questions()
+    try:
+        questions_data = llm.generate_daily_questions()
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Assessment generation failed: {str(e)}")
     
     # Save to DB
     new_assessment = Assessment(title=f"Daily Assessment {today}", date=datetime.utcnow())
@@ -97,14 +100,7 @@ def submit_assessment(
                 if user_answer == q.correct_answer:
                     correct_count += 1
     else:
-        # Fallback if no assessment found in DB (shouldn't happen normally)
-        # We could try to score against MOCK_QUESTIONS as a backup
-        from app.services.llm import MOCK_QUESTIONS
-        for q in MOCK_QUESTIONS:
-            if q["type"] == "mcq":
-                total_questions += 1
-                if responses.get("responses", {}).get(q["text"]) == q["correct_answer"]:
-                    correct_count += 1
+        raise HTTPException(status_code=404, detail="No active assessment found to submit against.")
 
     # Calculate percentage
     if total_questions > 0:
