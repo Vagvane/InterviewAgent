@@ -24,7 +24,7 @@ A full-stack AI-powered Interview Agent application built with FastAPI (Backend)
 2. Create a virtual environment:
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   venv\Scripts\activate
    ```
 3. Install dependencies:
    ```bash

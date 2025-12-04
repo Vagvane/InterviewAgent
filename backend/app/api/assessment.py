@@ -26,16 +26,21 @@ def get_daily_assessment(
     ).first()
     
     if existing_assessment and not refresh:
-        # Return questions from DB
-        return {"questions": [
-            {
-                "id": q.id,
-                "text": q.text,
-                "type": q.type,
-                "options": q.options,
-                "category": q.category if hasattr(q, "category") else "General"
-            } for q in existing_assessment.questions
-        ]}
+        # Check if any question has "General" category (which we want to avoid)
+        has_general = any((q.category == "General" or q.category is None) for q in existing_assessment.questions)
+        
+        if not has_general:
+            # Return questions from DB
+            return {"questions": [
+                {
+                    "id": q.id,
+                    "text": q.text,
+                    "type": q.type,
+                    "options": q.options,
+                    "category": q.category if hasattr(q, "category") else "General"
+                } for q in existing_assessment.questions
+            ]}
+        # If has_general is True, we fall through to generate new questions (Auto-heal)
 
     # Generate new questions
     questions_data = llm.generate_daily_questions()

@@ -1,0 +1,71 @@
+
+> frontend@0.1.0 build
+> next build
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\Mamba\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\Mamba\OneDrive\Desktop\College\MCA3rd Sem\InterviewAgent\frontend\package-lock.json
+
+   ▲ Next.js 16.0.7 (Turbopack)
+
+   Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 2 errors:
+./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx:8:1
+Module not found: Can't resolve '@/components/ui/switch'
+[0m [90m  6 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"@/components/ui/label"[39m
+ [90m  7 |[39m [36mimport[39m { [33mTabs[39m[33m,[39m [33mTabsContent[39m[33m,[39m [33mTabsList[39m[33m,[39m [33mTabsTrigger[39m } [36mfrom[39m [32m"@/components/ui/tabs"[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m { [33mSwitch[39m } [36mfrom[39m [32m"@/components/ui/switch"[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m { [33mUser[39m[33m,[39m [33mLock[39m[33m,[39m [33mBell[39m[33m,[39m [33mShield[39m[33m,[39m [33mCreditCard[39m } [36mfrom[39m [32m"lucide-react"[39m
+ [90m 10 |[39m [36mimport[39m { motion } [36mfrom[39m [32m"framer-motion"[39m
+ [90m 11 |[39m[0m
+
+Import map: aliased to relative './components/ui/switch' inside of [project]/OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend
+
+
+Import traces:
+  Client Component Browser:
+    ./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx [Client Component Browser]
+    ./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx [Client Component SSR]
+    ./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx:7:1
+Module not found: Can't resolve '@/components/ui/tabs'
+[0m [90m  5 |[39m [36mimport[39m { [33mInput[39m } [36mfrom[39m [32m"@/components/ui/input"[39m
+ [90m  6 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"@/components/ui/label"[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m { [33mTabs[39m[33m,[39m [33mTabsContent[39m[33m,[39m [33mTabsList[39m[33m,[39m [33mTabsTrigger[39m } [36mfrom[39m [32m"@/components/ui/tabs"[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m [36mimport[39m { [33mSwitch[39m } [36mfrom[39m [32m"@/components/ui/switch"[39m
+ [90m  9 |[39m [36mimport[39m { [33mUser[39m[33m,[39m [33mLock[39m[33m,[39m [33mBell[39m[33m,[39m [33mShield[39m[33m,[39m [33mCreditCard[39m } [36mfrom[39m [32m"lucide-react"[39m
+ [90m 10 |[39m [36mimport[39m { motion } [36mfrom[39m [32m"framer-motion"[39m[0m
+
+Import map: aliased to relative './components/ui/tabs' inside of [project]/OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend
+
+
+Import traces:
+  Client Component Browser:
+    ./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx [Client Component Browser]
+    ./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx [Client Component SSR]
+    ./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx:8:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./OneDrive/Desktop/College/MCA3rd Sem/InterviewAgent/frontend/app/dashboard/settings/page.tsx:7:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)

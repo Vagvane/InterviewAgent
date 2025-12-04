@@ -19,11 +19,12 @@ MOCK_QUESTIONS = [
     {"category": "DSA", "type": "mcq", "text": "Which of the following is a linear data structure?", "options": ["Tree", "Graph", "Array", "AVL Tree"], "correct_answer": "Array"},
     {"category": "DSA", "type": "mcq", "text": "In a stack, if a user tries to remove an element from an empty stack it is called?", "options": ["Underflow", "Empty collection", "Overflow", "Garbage collection"], "correct_answer": "Underflow"},
 
-    # 4 Frontend Questions
-    {"category": "Frontend", "type": "mcq", "text": "Which hook is used for side effects in React?", "options": ["useState", "useEffect", "useContext", "useReducer"], "correct_answer": "useEffect"},
-    {"category": "Frontend", "type": "mcq", "text": "What does CSS stand for?", "options": ["Creative Style Sheets", "Cascading Style Sheets", "Computer Style Sheets", "Colorful Style Sheets"], "correct_answer": "Cascading Style Sheets"},
-    {"category": "Frontend", "type": "mcq", "text": "Which HTML tag is used to define an internal style sheet?", "options": ["<script>", "<style>", "<css>", "<link>"], "correct_answer": "<style>"},
-    {"category": "Frontend", "type": "mcq", "text": "What is the default display value of a <div> element?", "options": ["inline", "block", "inline-block", "flex"], "correct_answer": "block"},
+    # 5 OOPs Questions (Replaced Frontend)
+    {"category": "OOPs", "type": "mcq", "text": "Which concept allows a class to derive properties from another class?", "options": ["Polymorphism", "Inheritance", "Encapsulation", "Abstraction"], "correct_answer": "Inheritance"},
+    {"category": "OOPs", "type": "mcq", "text": "Which of these is an access modifier?", "options": ["protected", "void", "static", "final"], "correct_answer": "protected"},
+    {"category": "OOPs", "type": "mcq", "text": "What is the process of hiding internal details and showing only functionality?", "options": ["Encapsulation", "Abstraction", "Polymorphism", "Inheritance"], "correct_answer": "Abstraction"},
+    {"category": "OOPs", "type": "mcq", "text": "Which feature of OOP illustrated the code reusability?", "options": ["Polymorphism", "Abstraction", "Inheritance", "Encapsulation"], "correct_answer": "Inheritance"},
+    {"category": "OOPs", "type": "mcq", "text": "Method overloading is an example of?", "options": ["Runtime Polymorphism", "Compile time Polymorphism", "Encapsulation", "Inheritance"], "correct_answer": "Compile time Polymorphism"},
 
     # 1 Subjective Question
     {"category": "Subjective", "type": "subjective", "text": "Explain the concept of Virtual DOM in React.", "options": [], "correct_answer": "The Virtual DOM is a lightweight copy of the actual DOM. React uses it to improve performance by updating only the changed parts of the real DOM."}
@@ -82,10 +83,10 @@ def generate_daily_questions():
         Generate a daily technical assessment for a Full Stack Developer.
         
         Requirements:
-        1. 5 Multiple Choice Questions (MCQs) covering Java.
-        2. 5 Multiple Choice Questions (MCQs) covering DSA.
-        3. 5 Multiple Choice Questions (MCQs) covering OOPs.
-        4. 1 Subjective Question.
+        1. EXACTLY 5 Multiple Choice Questions (MCQs) covering "Java".
+        2. EXACTLY 5 Multiple Choice Questions (MCQs) covering "DSA".
+        3. EXACTLY 5 Multiple Choice Questions (MCQs) covering "OOPs".
+        4. EXACTLY 1 Subjective Question covering "Subjective".
         5. OUTPUT MUST BE RAW JSON ONLY. NO MARKDOWN. NO EXPLANATIONS.
         
         Response Format (JSON Array):
@@ -112,134 +113,46 @@ def generate_daily_questions():
         content = response.choices[0].message.content
         cleaned_content = clean_json_response(content)
         
+        questions = []
         try:
-            return json.loads(cleaned_content)
+            questions = json.loads(cleaned_content)
         except json.JSONDecodeError as e:
             print(f"JSON Parse Error: {e}")
-            print(f"Failed Content: {cleaned_content[:500]}...") # Log first 500 chars
             # Try one more fallback: sometimes models use single quotes
             try:
                 import ast
-                return ast.literal_eval(cleaned_content)
+                questions = ast.literal_eval(cleaned_content)
             except:
                 return MOCK_QUESTIONS
+
+        # Post-processing to ensure categories are set
+        if isinstance(questions, list):
+            for i, q in enumerate(questions):
+                if "category" not in q or q["category"] == "General":
+                    # Infer category based on index if missing
+                    if i < 5: q["category"] = "Java"
+                    elif i < 10: q["category"] = "DSA"
+                    elif i < 15: q["category"] = "OOPs"
+                    else: q["category"] = "Subjective"
+        
+        return questions
         
     except Exception as e:
         print(f"Error generating daily questions: {e}")
         return MOCK_QUESTIONS
 
-FALLBACK_CODING_PROBLEMS = [
-    {
-        "title": "Two Sum",
-        "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
-        "difficulty": "Easy",
-        "test_cases": [{"input": "[2,7,11,15], 9", "output": "[0,1]"}, {"input": "[3,2,4], 6", "output": "[1,2]"}]
-    },
-    {
-        "title": "Valid Palindrome",
-        "description": "A phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Given a string s, return true if it is a palindrome, or false otherwise.",
-        "difficulty": "Easy",
-        "test_cases": [{"input": "\"A man, a plan, a canal: Panama\"", "output": "true"}, {"input": "\"race a car\"", "output": "false"}]
-    },
-    {
-        "title": "Reverse Linked List",
-        "description": "Given the head of a singly linked list, reverse the list, and return the reversed list.",
-        "difficulty": "Easy",
-        "test_cases": [{"input": "[1,2,3,4,5]", "output": "[5,4,3,2,1]"}, {"input": "[1,2]", "output": "[2,1]"}]
-    },
-    {
-        "title": "Maximum Subarray",
-        "description": "Given an integer array nums, find the subarray with the largest sum, and return its sum.",
-        "difficulty": "Medium",
-        "test_cases": [{"input": "[-2,1,-3,4,-1,2,1,-5,4]", "output": "6"}, {"input": "[1]", "output": "1"}]
-    },
-    {
-        "title": "Climbing Stairs",
-        "description": "You are climbing a staircase. It takes n steps to reach the top. Each time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top?",
-        "difficulty": "Easy",
-        "test_cases": [{"input": "2", "output": "2"}, {"input": "3", "output": "3"}]
-    }
-]
-
 def generate_coding_problem():
     """
     Generates a random coding problem (Easy/Medium/Hard) using LLM.
+    Returns an error object if generation fails (No Fallbacks).
     """
     if not settings.OPENAI_API_KEY or settings.OPENAI_API_KEY.startswith("INSERT_YOUR"):
         return {
             "id": 1,
-            "title": "Two Sum (Mock)",
-            "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
-            "difficulty": "Easy",
-            "test_cases": [{"input": "[2,7,11,15], 9", "output": "[0,1]"}]
-        }
-
-    try:
-        from openai import OpenAI
-        client = OpenAI(
-            api_key=settings.OPENAI_API_KEY,
-            base_url=settings.OPENAI_API_BASE
-        )
-        
-        prompt = """
-        Generate a unique coding interview problem.
-        
-        Requirements:
-        1. Title: Short and descriptive.
-        2. Description: Clear problem statement.
-        3. Difficulty: Randomly choose between Easy, Medium, Hard.
-        4. Test Cases: Provide 2-3 example test cases.
-        5. OUTPUT MUST BE RAW JSON ONLY. NO MARKDOWN.
-        
-        Response Format (JSON):
-        {
-            "title": "Problem Title",
-            "description": "Full problem description...",
-            "difficulty": "Medium",
-            "test_cases": [
-                {"input": "...", "output": "..."},
-                {"input": "...", "output": "..."}
-            ]
-        }
-        """
-        
-        response = client.chat.completions.create(
-            model=settings.OPENAI_MODEL_NAME,
-            messages=[
-                {"role": "system", "content": "You are a senior technical interviewer. Return strictly valid JSON only."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.8
-        )
-        
-        content = response.choices[0].message.content
-        cleaned_content = clean_json_response(content)
-        
-        problem = json.loads(cleaned_content)
-        problem["id"] = random.randint(100, 9999) # Generate a random ID for now
-        return problem
-        
-    except Exception as e:
-        print(f"Error generating coding problem: {e}")
-        return {
-            "id": 1,
-            "title": "Error Generating Problem",
-            "description": "Could not generate a new problem. Please try again.",
-            "difficulty": "Unknown",
+            "title": "API Key Missing",
+            "description": "Please configure a valid OpenAI/SambaNova API key in .env to generate coding problems.",
+            "difficulty": "System",
             "test_cases": []
-        }
-
-def generate_coding_problem():
-    """
-    Generates a random coding problem (Easy/Medium/Hard) using LLM.
-    """
-    if not settings.OPENAI_API_KEY or settings.OPENAI_API_KEY.startswith("INSERT_YOUR"):
-        return {
-            "id": 1,
-            "title": "Two Sum (Mock)",
-            "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
-            "difficulty": "Easy",
-            "test_cases": [{"input": "[2,7,11,15], 9", "output": "[0,1]"}]
         }
 
     for attempt in range(2): # Retry up to 2 times
@@ -277,7 +190,7 @@ def generate_coding_problem():
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.6,
-                timeout=8.0 # Strict timeout to prevent frontend hanging
+                timeout=8.0 # Strict timeout
             )
             
             content = response.choices[0].message.content
@@ -286,39 +199,34 @@ def generate_coding_problem():
             try:
                 problem = json.loads(cleaned_content)
             except json.JSONDecodeError:
-                # Fallback for single quotes or slight malformation
                 import ast
                 problem = ast.literal_eval(cleaned_content)
                 
-            # Handle case where model returns a list instead of a dict
             if isinstance(problem, list):
-                if len(problem) > 0:
-                    problem = problem[0]
-                else:
-                    continue # Retry on empty list
+                if len(problem) > 0: problem = problem[0]
+                else: continue
                     
-            if not isinstance(problem, dict):
-                 continue # Retry if not a dict
+            if not isinstance(problem, dict): continue
     
-            # Validate required keys
             required_keys = ["title", "description", "test_cases"]
-            missing_keys = [key for key in required_keys if key not in problem]
-            if missing_keys:
-                print(f"Attempt {attempt+1} failed: Missing keys {missing_keys}")
-                continue # Retry on missing keys
+            if any(key not in problem for key in required_keys):
+                continue
     
-            problem["id"] = random.randint(100, 9999) # Generate a random ID for now
+            problem["id"] = random.randint(100, 9999)
             return problem
             
         except Exception as e:
             print(f"Attempt {attempt+1} error: {e}")
             continue
 
-    # If all retries fail, return a random fallback problem
-    print("All retries failed. Using fallback problem.")
-    fallback = random.choice(FALLBACK_CODING_PROBLEMS)
-    fallback["id"] = random.randint(10000, 99999)
-    return fallback
+    # If all retries fail, return error object (No Fallback Questions)
+    return {
+        "id": 1,
+        "title": "Generation Failed",
+        "description": "Could not generate a new problem. This is likely due to an API Key expiry or connection issue. Please check your API configuration.",
+        "difficulty": "Error",
+        "test_cases": []
+    }
 
 def evaluate_code(code: str, language: str, problem_title: str):
     """
