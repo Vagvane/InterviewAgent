@@ -18,12 +18,20 @@ def clean_json_response(content: str):
     elif "```" in content:
         content = content.split("```")[1].split("```")[0].strip()
         
-    # Find the first '[' and last ']' to extract the array
-    start_idx = content.find('[')
-    end_idx = content.rfind(']')
+    # Find the first '{' or '['
+    start_obj = content.find('{')
+    start_arr = content.find('[')
     
-    if start_idx != -1 and end_idx != -1:
-        content = content[start_idx:end_idx+1]
+    if start_obj != -1 and (start_arr == -1 or start_obj < start_arr):
+        # It's an object
+        end_obj = content.rfind('}')
+        if end_obj != -1:
+            content = content[start_obj:end_obj+1]
+    elif start_arr != -1:
+        # It's an array
+        end_arr = content.rfind(']')
+        if end_arr != -1:
+            content = content[start_arr:end_arr+1]
         
     return content
 
@@ -83,78 +91,83 @@ def generate_daily_questions():
     if not is_valid_api_key():
         raise Exception("OpenAI API Key is missing or invalid. Please configure it in .env to generate questions.")
 
-    try:
-        from openai import OpenAI
-        client = OpenAI(
-            api_key=settings.OPENAI_API_KEY,
-            base_url=settings.OPENAI_API_BASE
-        )
-        
-        prompt = """
-        Generate a daily technical assessment for a Full Stack Developer.
-        
-        Requirements:
-        1. EXACTLY 5 Multiple Choice Questions (MCQs) covering "Java".
-        2. EXACTLY 5 Multiple Choice Questions (MCQs) covering "DSA".
-        3. EXACTLY 5 Multiple Choice Questions (MCQs) covering "OOPs".
-        4. EXACTLY 1 Subjective Question covering "Subjective".
-        5. OUTPUT MUST BE RAW JSON ONLY. NO MARKDOWN. NO EXPLANATIONS.
-        
-        Response Format (JSON Array):
-        [
-            {"category": "Java", "type": "mcq", "text": "Question?", "options": ["A", "B", "C", "D"], "correct_answer": "Correct Option Text"},
-            ...
-            {"category": "DSA", "type": "mcq", "text": "Question?", "options": ["A", "B", "C", "D"], "correct_answer": "Correct Option Text"},
-            ...
-            {"category": "OOPs", "type": "mcq", "text": "Question?", "options": ["A", "B", "C", "D"], "correct_answer": "Correct Option Text"},
-            ...
-            {"category": "Subjective", "type": "subjective", "text": "Question?", "options": [], "correct_answer": "Model Answer"}
-        ]
-        """
-        
-        response = client.chat.completions.create(
-            model=settings.OPENAI_MODEL_NAME,
-            messages=[
-                {"role": "system", "content": "You are a technical interviewer. Return strictly valid JSON array only."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7
-        )
-        
-        content = response.choices[0].message.content
-        cleaned_content = clean_json_response(content)
-        
-        questions = []
+    for attempt in range(3):
         try:
-            questions = json.loads(cleaned_content)
-        except json.JSONDecodeError as e:
-            print(f"JSON Parse Error: {e}")
-            # Try one more fallback: sometimes models use single quotes
+            from openai import OpenAI
+            client = OpenAI(
+                api_key=settings.OPENAI_API_KEY,
+                base_url=settings.OPENAI_API_BASE
+            )
+            
+            prompt = """
+            Generate a daily technical assessment for a Full Stack Developer.
+            
+            Requirements:
+            1. EXACTLY 5 Multiple Choice Questions (MCQs) covering "Java".
+            2. EXACTLY 5 Multiple Choice Questions (MCQs) covering "DSA".
+            3. EXACTLY 5 Multiple Choice Questions (MCQs) covering "OOPs".
+            4. EXACTLY 1 Subjective Question covering "Subjective".
+            5. OUTPUT MUST BE RAW JSON ONLY. NO MARKDOWN. NO EXPLANATIONS.
+            
+            Response Format (JSON Array):
+            [
+                {"category": "Java", "type": "mcq", "text": "Question?", "options": ["A", "B", "C", "D"], "correct_answer": "Correct Option Text"},
+                ...
+                {"category": "DSA", "type": "mcq", "text": "Question?", "options": ["A", "B", "C", "D"], "correct_answer": "Correct Option Text"},
+                ...
+                {"category": "OOPs", "type": "mcq", "text": "Question?", "options": ["A", "B", "C", "D"], "correct_answer": "Correct Option Text"},
+                ...
+                {"category": "Subjective", "type": "subjective", "text": "Question?", "options": [], "correct_answer": "Model Answer"}
+            ]
+            """
+            
+            response = client.chat.completions.create(
+                model=settings.OPENAI_MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": "You are a technical interviewer. Return strictly valid JSON array only."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7
+            )
+            
+            content = response.choices[0].message.content
+            cleaned_content = clean_json_response(content)
+            
+            questions = []
             try:
-                import ast
-                questions = ast.literal_eval(cleaned_content)
-            except:
-                raise Exception("Failed to parse LLM response for questions.")
+                questions = json.loads(cleaned_content)
+            except json.JSONDecodeError as e:
+                print(f"JSON Parse Error (Attempt {attempt+1}): {e}")
+                # Try one more fallback: sometimes models use single quotes
+                try:
+                    import ast
+                    questions = ast.literal_eval(cleaned_content)
+                except:
+                    # On last attempt, raise the error
+                    if attempt == 2:
+                        raise Exception(f"Failed to parse LLM response. Content preview: {cleaned_content[:200]}")
+                    continue # Retry
 
-        # Post-processing to ensure categories are set
-        if isinstance(questions, list):
-            for i, q in enumerate(questions):
-                if "category" not in q or q["category"] == "General":
-                    # Infer category based on index if missing
-                    if i < 5: q["category"] = "Java"
-                    elif i < 10: q["category"] = "DSA"
-                    elif i < 15: q["category"] = "OOPs"
-                    else: q["category"] = "Subjective"
-        
-        return questions
-        
-    except Exception as e:
-        error_msg = str(e)
-        if "429" in error_msg:
-            print(f"Rate Limit Exceeded: {error_msg}")
-            raise Exception("API Rate Limit Exceeded. Please check your API quota or try again later.")
-        print(f"Error generating daily questions: {e}")
-        raise e # Re-raise to prevent fallback
+            # Post-processing to ensure categories are set
+            if isinstance(questions, list):
+                for i, q in enumerate(questions):
+                    if "category" not in q or q["category"] == "General":
+                        # Infer category based on index if missing
+                        if i < 5: q["category"] = "Java"
+                        elif i < 10: q["category"] = "DSA"
+                        elif i < 15: q["category"] = "OOPs"
+                        else: q["category"] = "Subjective"
+            
+            return questions
+            
+        except Exception as e:
+            error_msg = str(e)
+            if "429" in error_msg:
+                print(f"Rate Limit Exceeded: {error_msg}")
+                raise Exception("API Rate Limit Exceeded. Please check your API quota or try again later.")
+            print(f"Error generating daily questions (Attempt {attempt+1}): {e}")
+            if attempt == 2:
+                raise e # Re-raise on last attempt
 
 def generate_coding_problem():
     """
@@ -170,7 +183,7 @@ def generate_coding_problem():
             "test_cases": []
         }
 
-    for attempt in range(2): # Retry up to 2 times
+    for attempt in range(3): # Retry up to 3 times
         try:
             from openai import OpenAI
             client = OpenAI(
@@ -205,7 +218,7 @@ def generate_coding_problem():
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.6,
-                timeout=8.0 # Strict timeout
+                timeout=10.0 # Increased timeout
             )
             
             content = response.choices[0].message.content
@@ -213,9 +226,16 @@ def generate_coding_problem():
             
             try:
                 problem = json.loads(cleaned_content)
-            except json.JSONDecodeError:
-                import ast
-                problem = ast.literal_eval(cleaned_content)
+            except json.JSONDecodeError as e:
+                print(f"JSON Parse Error (Attempt {attempt+1}): {e}")
+                try:
+                    import ast
+                    problem = ast.literal_eval(cleaned_content)
+                except:
+                    if attempt == 2:
+                        with open("failed_coding_response.txt", "w", encoding="utf-8") as f:
+                            f.write(content)
+                    continue
                 
             if isinstance(problem, list):
                 if len(problem) > 0: problem = problem[0]
@@ -323,62 +343,65 @@ def generate_interview_followup(history: list, job_description: str, resume_text
     if not is_valid_api_key():
         return "Error: AI Interviewer is offline (API Key missing)."
 
-    try:
-        from openai import OpenAI
-        client = OpenAI(
-            api_key=settings.OPENAI_API_KEY,
-            base_url=settings.OPENAI_API_BASE
-        )
-        
-        # Determine Stage based on turn count (each turn has user+ai, so 2 messages)
-        turn_count = len(history) // 2
-        stage = "General Introduction"
-        if turn_count < 2:
-            stage = "Introduction & Ice-breaking"
-        elif turn_count < 5:
-            stage = "Job Role Fit & Motivation (Focus on JD)"
-        elif turn_count < 8:
-            stage = "Resume & Experience Deep Dive"
-        elif turn_count < 12:
-            stage = "Technical & Problem Solving"
-        else:
-            stage = "Closing & Wrap-up"
-
-        system_prompt = f"""
-        You are an expert AI Technical Interviewer. 
-        Current Stage: {stage}
-        
-        Context:
-        - Job Description: {job_description}
-        - Candidate Resume: {resume_text[:2000]}... (truncated)
-        
-        Guidelines:
-        1. Ask ONE clear, relevant question based on the current stage.
-        2. Be professional but conversational.
-        3. If the candidate's answer is vague, ask a follow-up.
-        4. Do NOT repeat questions.
-        5. Keep responses concise (under 50 words) to maintain flow.
-        """
-        
-        messages = [{"role": "system", "content": system_prompt}]
-        
-        # Add conversation history
-        for msg in history:
-            messages.append({"role": msg["role"], "content": msg["content"]})
+    for attempt in range(3):
+        try:
+            from openai import OpenAI
+            client = OpenAI(
+                api_key=settings.OPENAI_API_KEY,
+                base_url=settings.OPENAI_API_BASE
+            )
             
-        response = client.chat.completions.create(
-            model=settings.OPENAI_MODEL_NAME,
-            messages=messages,
-            temperature=0.7
-        )
-        
-        return response.choices[0].message.content
-    except Exception as e:
-        error_msg = str(e)
-        if "429" in error_msg:
-            return "Error: API Rate Limit Exceeded. Please check your system configuration."
-        print(f"Error generating interview response: {e}")
-        return f"Error: {str(e)}"
+            # Determine Stage based on turn count (each turn has user+ai, so 2 messages)
+            turn_count = len(history) // 2
+            stage = "General Introduction"
+            if turn_count < 2:
+                stage = "Introduction & Ice-breaking"
+            elif turn_count < 5:
+                stage = "Job Role Fit & Motivation (Focus on JD)"
+            elif turn_count < 8:
+                stage = "Resume & Experience Deep Dive"
+            elif turn_count < 12:
+                stage = "Technical & Problem Solving"
+            else:
+                stage = "Closing & Wrap-up"
+
+            system_prompt = f"""
+            You are an expert AI Technical Interviewer. 
+            Current Stage: {stage}
+            
+            Context:
+            - Job Description: {job_description}
+            - Candidate Resume: {resume_text[:2000]}... (truncated)
+            
+            Guidelines:
+            1. Ask ONE clear, relevant question based on the current stage.
+            2. Be professional but conversational.
+            3. If the candidate's answer is vague, ask a follow-up.
+            4. Do NOT repeat questions.
+            5. Keep responses concise (under 50 words) to maintain flow.
+            """
+            
+            messages = [{"role": "system", "content": system_prompt}]
+            
+            # Add conversation history
+            for msg in history:
+                messages.append({"role": msg["role"], "content": msg["content"]})
+                
+            response = client.chat.completions.create(
+                model=settings.OPENAI_MODEL_NAME,
+                messages=messages,
+                temperature=0.7,
+                timeout=10.0
+            )
+            
+            return response.choices[0].message.content
+        except Exception as e:
+            error_msg = str(e)
+            if "429" in error_msg:
+                return "Error: API Rate Limit Exceeded. Please check your system configuration."
+            print(f"Error generating interview response (Attempt {attempt+1}): {e}")
+            if attempt == 2:
+                return f"Error: {str(e)}"
 
 def generate_interview_feedback(history: list, job_description: str):
     """
@@ -392,70 +415,80 @@ def generate_interview_feedback(history: list, job_description: str):
             "summary": "Please configure a valid API key to receive feedback."
         }
 
-    try:
-        from openai import OpenAI
-        client = OpenAI(
-            api_key=settings.OPENAI_API_KEY,
-            base_url=settings.OPENAI_API_BASE # Will be None by default (OpenAI), or custom URL
-        )
-        
-        prompt = f"""
-        Analyze this technical interview transcript and provide a detailed assessment.
-        
-        Job Description: {job_description}
-        
-        Transcript:
-        {json.dumps(history[-20:])} 
-        
-        Task:
-        1. Rate the candidate from 0-100 based on relevance, technical depth, and communication.
-        2. Identify top 3 strengths.
-        3. Identify top 3 areas for improvement (weaknesses).
-        4. Write a brief professional summary (2-3 sentences).
-        
-        Response Format (JSON):
-        {{
-            "score": 85,
-            "strengths": ["...", "...", "..."],
-            "weaknesses": ["...", "...", "..."],
-            "summary": "..."
-        }}
-        """
-        
-        response = client.chat.completions.create(
-            model=settings.OPENAI_MODEL_NAME,
-            messages=[
-                {"role": "system", "content": "You are a senior hiring manager. Return JSON only."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.5
-        )
-        
-        content = response.choices[0].message.content
+    for attempt in range(3):
         try:
-            return json.loads(content)
-        except json.JSONDecodeError:
-            return {
-                "score": 70,
-                "strengths": ["Communication"],
-                "weaknesses": ["Technical Depth"],
-                "summary": content[:200]
-            }
+            from openai import OpenAI
+            client = OpenAI(
+                api_key=settings.OPENAI_API_KEY,
+                base_url=settings.OPENAI_API_BASE # Will be None by default (OpenAI), or custom URL
+            )
             
-    except Exception as e:
-        error_msg = str(e)
-        if "429" in error_msg:
-            return {
-                "score": 0,
-                "strengths": ["Rate Limit Exceeded"],
-                "weaknesses": ["Please check API quota"],
-                "summary": "Could not generate feedback due to API rate limits."
-            }
-        print(f"Error generating feedback: {e}")
-        # Return error state so frontend knows it failed
-        return {
-            "score": 0,
-            "strengths": ["Analysis Failed"],
-            "weaknesses": ["API Error or Quota Exceeded"],
-            "summary": f"Could not generate feedback report. Error: {str(e)}"
-        }
+            prompt = f"""
+            Analyze this technical interview transcript and provide a detailed assessment.
+            
+            Job Description: {job_description}
+            
+            Transcript:
+            {json.dumps(history[-20:])} 
+            
+            Task:
+            1. Rate the candidate from 0-100 based on relevance, technical depth, and communication.
+            2. Identify top 3 strengths.
+            3. Identify top 3 areas for improvement (weaknesses).
+            4. Write a brief professional summary (2-3 sentences).
+            
+            Response Format (JSON):
+            {{
+                "score": 85,
+                "strengths": ["...", "...", "..."],
+                "weaknesses": ["...", "...", "..."],
+                "summary": "..."
+            }}
+            """
+            
+            response = client.chat.completions.create(
+                model=settings.OPENAI_MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": "You are a senior hiring manager. Return JSON only."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.5,
+                timeout=15.0
+            )
+            
+            content = response.choices[0].message.content
+            cleaned_content = clean_json_response(content)
+            
+            try:
+                return json.loads(cleaned_content)
+            except json.JSONDecodeError:
+                try:
+                    import ast
+                    return ast.literal_eval(cleaned_content)
+                except:
+                    if attempt == 2:
+                        return {
+                            "score": 70,
+                            "strengths": ["Communication"],
+                            "weaknesses": ["Technical Depth"],
+                            "summary": content[:200]
+                        }
+                    continue
+                
+        except Exception as e:
+            error_msg = str(e)
+            if "429" in error_msg:
+                return {
+                    "score": 0,
+                    "strengths": ["Rate Limit Exceeded"],
+                    "weaknesses": ["Please check API quota"],
+                    "summary": "Could not generate feedback due to API rate limits."
+                }
+            print(f"Error generating feedback (Attempt {attempt+1}): {e}")
+            if attempt == 2:
+                return {
+                    "score": 0,
+                    "strengths": ["Analysis Failed"],
+                    "weaknesses": ["API Error or Quota Exceeded"],
+                    "summary": f"Could not generate feedback report. Error: {str(e)}"
+                }

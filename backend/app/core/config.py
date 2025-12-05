@@ -22,4 +22,4 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 settings = Settings()
-# Reload trigger - Key Updated
+# Reload trigger - Key Updated - Force Reload
