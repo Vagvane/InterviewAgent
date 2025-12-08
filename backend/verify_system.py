@@ -78,27 +78,33 @@ def verify_system():
     except Exception as e:
         print_result("Coding Generation", False, str(e))
 
-    # 4. Interview Chat
+    # 4. Interview Chat (With Session Start)
     try:
         print("\n🗣️ Testing Interview Chat (AI)...")
-        # Start a new session or use mock history
-        chat_data = {
-            "history": [
-                {"role": "user", "content": "Hello, I am ready for the interview."}
-            ],
-            "job_description": "Full Stack Developer role",
-            "resume_text": "Experienced web developer."
+        # Start a new session first
+        start_data = {
+            "job_description": "Full Stack Developer role"
         }
-        res = requests.post(f"{API_URL}/interview/chat", json=chat_data, headers=headers)
-        if res.status_code == 200:
-            data = res.json()
-            reply = data.get("reply", "")
-            if reply:
-                print_result("Interview Chat", True, f"AI Repled: {reply[:50]}...")
+        res_start = requests.post(f"{API_URL}/interview/start", data=start_data, headers=headers)
+        if res_start.status_code == 200:
+            session_id = res_start.json()["session_id"]
+            print(f"   Session started with ID: {session_id}")
+            
+            # Send chat message
+            chat_data = {"message": "Hello, I am ready for the interview."}
+            res = requests.post(f"{API_URL}/interview/{session_id}/chat", json=chat_data, headers=headers)
+            if res.status_code == 200:
+                data = res.json()
+                reply = data.get("response", "") or data.get("reply", "")
+                if reply:
+                    print_result("Interview Chat", True, f"AI Replied: {reply[:50]}...")
+                else:
+                     print_result("Interview Chat", False, "Empty reply")
             else:
-                 print_result("Interview Chat", False, "Empty reply")
+                 print_result("Interview Chat", False, f"Chat Status {res.status_code}: {res.text}")
         else:
-            print_result("Interview Chat", False, f"Status {res.status_code}: {res.text}")
+            print_result("Interview Chat", False, f"Start Status {res_start.status_code}: {res_start.text}")
+            
     except Exception as e:
         print_result("Interview Chat", False, str(e))
 
