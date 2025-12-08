@@ -59,30 +59,6 @@ def is_valid_api_key():
         
     return True
 
-# ... (imports remain the same)
-
-def is_valid_api_key():
-    """
-    Checks if a valid API key is configured.
-    Returns True if key exists and is not a placeholder.
-    """
-    key = settings.OPENAI_API_KEY
-    if not key:
-        return False
-    
-    # Check for common placeholders
-    placeholders = [
-        "INSERT_YOUR", 
-        "sk-proj-your", 
-        "CHANGE_THIS", 
-        "YOUR_API_KEY"
-    ]
-    
-    if any(p in key for p in placeholders):
-        return False
-        
-    return True
-
 def generate_daily_questions():
     """
     Generates 5 MCQs and 1 Subjective question using the LLM.
@@ -127,7 +103,8 @@ def generate_daily_questions():
                     {"role": "system", "content": "You are a technical interviewer. Return strictly valid JSON array only."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.7
+                temperature=0.7,
+                timeout=60.0
             )
             
             content = response.choices[0].message.content
@@ -390,7 +367,8 @@ def generate_interview_followup(history: list, job_description: str, resume_text
             response = client.chat.completions.create(
                 model=settings.OPENAI_MODEL_NAME,
                 messages=messages,
-                temperature=0.7,
+                temperature=0.6,
+                max_tokens=150,
                 timeout=10.0
             )
             

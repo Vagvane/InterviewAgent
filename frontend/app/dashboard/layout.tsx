@@ -104,6 +104,51 @@ export default function DashboardLayout({
                             <p className="text-xs text-muted-foreground mb-3">Get unlimited AI interviews</p>
                             <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm rounded-lg h-8 text-xs">Upgrade</Button>
                         </div>
+
+                        <div className="mt-4 pt-4 border-t border-white/20 dark:border-gray-800 flex items-center justify-between">
+                            {mounted ? (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="relative h-12 w-full justify-start px-2 gap-3 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-xl">
+                                            <Avatar className="h-9 w-9 border border-white/20">
+                                                <AvatarImage src="/avatars/01.png" alt="@user" />
+                                                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-medium">
+                                                    {userInitials}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col items-start text-left overflow-hidden">
+                                                <span className="text-sm font-medium truncate w-full">{userName}</span>
+                                                <span className="text-xs text-muted-foreground truncate w-full">{userEmail}</span>
+                                            </div>
+                                            <Settings className="ml-auto h-4 w-4 text-muted-foreground opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-60 rounded-xl shadow-xl border-none bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl p-2 mb-2" align="start" side="right" forceMount>
+                                        <DropdownMenuItem className="cursor-pointer rounded-lg focus:bg-blue-50 dark:focus:bg-blue-900/20 focus:text-blue-600" onClick={() => router.push('/dashboard/profile')}>
+                                            <User className="mr-2 h-4 w-4" />
+                                            <span>Profile</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer rounded-lg focus:bg-blue-50 dark:focus:bg-blue-900/20 focus:text-blue-600">
+                                            <Settings className="mr-2 h-4 w-4" />
+                                            <span>Settings</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+                                        <DropdownMenuItem className="text-red-600 cursor-pointer rounded-lg focus:bg-red-50 dark:focus:bg-red-900/20" onClick={handleLogout}>
+                                            <LogOut className="mr-2 h-4 w-4" />
+                                            <span>Log out</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            ) : (
+                                <div className="flex items-center gap-3 w-full p-2">
+                                    <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                                    <div className="flex-1 space-y-1">
+                                        <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                                        <div className="h-2 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -113,67 +158,19 @@ export default function DashboardLayout({
                 {/* Background Decor */}
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-50/50 via-white to-purple-50/50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 -z-10" />
 
-                {/* Top Header */}
-                <header className="h-20 flex items-center justify-between px-8 z-10">
+                {/* Top Header - Mobile Only via class adjustment or keep purely for triggers w/o taking space */}
+                <header className="h-14 md:hidden flex items-center justify-between px-4 z-10 border-b bg-white/50 backdrop-blur-sm">
                     <div className="flex items-center gap-4">
                         <Button variant="ghost" size="icon" className="md:hidden rounded-xl bg-white/50 backdrop-blur-sm border border-white/20">
                             <Menu className="h-5 w-5" />
                         </Button>
-                        <div className="text-sm text-muted-foreground hidden md:block">
-                            {/* Breadcrumbs could go here */}
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors">
-                            <Bell className="h-5 w-5 text-muted-foreground" />
-                        </Button>
-
-                        {mounted ? (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="relative h-10 w-10 rounded-full cursor-pointer p-0 ring-2 ring-white dark:ring-gray-800 shadow-sm">
-                                        <Avatar className="h-10 w-10">
-                                            <AvatarImage src="/avatars/01.png" alt="@user" />
-                                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-medium">
-                                                {userInitials}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56 rounded-xl shadow-xl border-none bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl p-2" align="end" forceMount>
-                                    <DropdownMenuLabel className="font-normal p-2">
-                                        <div className="flex flex-col space-y-1">
-                                            <p className="text-sm font-medium leading-none">{userName}</p>
-                                            <p className="text-xs leading-none text-muted-foreground">
-                                                {userEmail}
-                                            </p>
-                                        </div>
-                                    </DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-                                    <DropdownMenuItem className="cursor-pointer rounded-lg focus:bg-blue-50 dark:focus:bg-blue-900/20 focus:text-blue-600" onClick={() => router.push('/dashboard/profile')}>
-                                        <User className="mr-2 h-4 w-4" />
-                                        <span>Profile</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem className="cursor-pointer rounded-lg focus:bg-blue-50 dark:focus:bg-blue-900/20 focus:text-blue-600">
-                                        <Settings className="mr-2 h-4 w-4" />
-                                        <span>Settings</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-                                    <DropdownMenuItem className="text-red-600 cursor-pointer rounded-lg focus:bg-red-50 dark:focus:bg-red-900/20" onClick={handleLogout}>
-                                        <LogOut className="mr-2 h-4 w-4" />
-                                        <span>Log out</span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        ) : (
-                            <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
-                        )}
+                        <span className="font-bold text-lg">Interview Agent</span>
                     </div>
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1 overflow-y-auto px-8 pb-8">
+                {/* Page Content */}
+                <main className="flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-8">
                     {children}
                 </main>
             </div>

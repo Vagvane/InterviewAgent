@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.coding import CodingProblem, CodingSubmission
 from app.services import llm
+import json
+from datetime import datetime
 
 router = APIRouter()
 
@@ -22,7 +24,27 @@ def get_daily_coding_problem(
     # Since the user wants "Load Next Question", we'll just generate every time for now 
     # or rely on frontend to ask for it.
     
-    return llm.generate_coding_problem()
+    problem_data = llm.generate_coding_problem()
+    
+    # Persist to DB to ensure ID exists for submission (Foreign Key constraint)
+    # Check if we can reuse the ID or let DB assign one. 
+    # LLM returns a random ID, but we should let DB handle it or upsert.
+    # Simpler: Create new entry.
+    
+    db_problem = CodingProblem(
+        title=problem_data.get("title"),
+        description=problem_data.get("description"),
+        difficulty=problem_data.get("difficulty"),
+        test_cases=json.dumps(problem_data.get("test_cases"))
+    )
+    db.add(db_problem)
+    db.commit()
+    db.refresh(db_problem)
+    
+    # Update the returned ID to match DB ID
+    problem_data["id"] = db_problem.id
+    
+    return problem_data
 
 @router.post("/run", response_model=Any)
 def run_code(

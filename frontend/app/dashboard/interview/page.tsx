@@ -38,6 +38,7 @@ export default function InterviewPage() {
     // Form State
     const [jd, setJd] = useState("")
     const [resume, setResume] = useState<File | null>(null)
+    const [stream, setStream] = useState<MediaStream | null>(null)
 
     // Refs
     const videoRef = useRef<HTMLVideoElement>(null)
@@ -67,10 +68,8 @@ export default function InterviewPage() {
     // AV Functions
     const startCamera = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream
-            }
+            const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            setStream(mediaStream)
             setCameraActive(true)
             setMicActive(true)
         } catch (err) {
@@ -79,10 +78,19 @@ export default function InterviewPage() {
         }
     }
 
+    // Attach stream to video element whenever it changes or component mounts
+    useEffect(() => {
+        if (videoRef.current && stream) {
+            videoRef.current.srcObject = stream
+        }
+    }, [stream, cameraActive])
+
     const stopCamera = () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
-            tracks.forEach(track => track.stop())
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop())
+            setStream(null)
+        }
+        if (videoRef.current) {
             videoRef.current.srcObject = null
         }
         setCameraActive(false)
@@ -97,45 +105,71 @@ export default function InterviewPage() {
         }
     }
 
+    const [isListening, setIsListening] = useState(false)
+    // Ref to track if we should really stop or just restart
+    const shouldStopListening = useRef(false)
+
     const initSpeechRecognition = () => {
         if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-            // alert("Speech Recognition is not supported in this browser.")
             return
         }
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+        // Singleton pattern for recognition instance
+        if (recognitionRef.current) return;
+
         const recognition = new SpeechRecognition()
         recognition.continuous = false
         recognition.interimResults = false
         recognition.lang = 'en-US'
 
         recognition.onstart = () => setIsListening(true)
-        recognition.onend = () => setIsListening(false)
+
+        recognition.onend = () => {
+            setIsListening(false)
+            // If we didn't intend to stop (e.g. silence timeout), restart immediately
+            if (!shouldStopListening.current && micActive) {
+                try {
+                    recognition.start()
+                } catch (e) {
+                    console.error("Failed to restart recognition", e)
+                }
+            }
+        }
 
         recognition.onresult = (event: any) => {
             const transcript = event.results[0][0].transcript
-            setInput(transcript)
-            handleSend(transcript) // Auto-send on speech end
+            if (transcript.trim()) {
+                shouldStopListening.current = true // Stop restarting while we process
+                setInput(transcript)
+                handleSend(transcript)
+            }
         }
 
         recognitionRef.current = recognition
+        shouldStopListening.current = false
+        try {
+            recognition.start()
+        } catch (e) { }
     }
 
-    const [isListening, setIsListening] = useState(false)
-
     const speak = (text: string) => {
-        window.speechSynthesis.cancel() // Stop previous
+        window.speechSynthesis.cancel()
+        shouldStopListening.current = true // Don't listen while speaking
+        if (recognitionRef.current) {
+            try { recognitionRef.current.stop() } catch (e) { }
+        }
+
         const utterance = new SpeechSynthesisUtterance(text)
         utterance.onstart = () => setIsSpeaking(true)
         utterance.onend = () => {
             setIsSpeaking(false)
-            // Auto-listen after AI finishes speaking
-            if (recognitionRef.current && micActive) {
+            // Restart listening after speech
+            if (micActive) {
+                shouldStopListening.current = false
                 try {
-                    recognitionRef.current.start()
-                } catch (e) {
-                    // Ignore if already started
-                }
+                    if (recognitionRef.current) recognitionRef.current.start()
+                } catch (e) { }
             }
         }
         window.speechSynthesis.speak(utterance)

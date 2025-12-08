@@ -194,10 +194,21 @@ export default function AssessmentPage() {
                                                                     />
                                                                     <Label
                                                                         htmlFor={`q${index}-opt${optIndex}`}
-                                                                        className="flex-1 cursor-pointer text-base leading-relaxed pointer-events-none" // pointer-events-none to let div handle click
+                                                                        className="flex-1 cursor-pointer text-base leading-relaxed pointer-events-none flex items-center justify-between" // pointer-events-none to let div handle click
                                                                     >
-                                                                        {option}
+                                                                        <span>{option}</span>
+                                                                        {submitted && option === question.correct_answer && (
+                                                                            <span className="ml-2 text-xs bg-green-600 text-white px-2 py-1 rounded-full font-bold shadow-sm">
+                                                                                Correct Answer
+                                                                            </span>
+                                                                        )}
+                                                                        {submitted && option === userAnswer && !isCorrect && (
+                                                                            <span className="ml-2 text-xs bg-red-600 text-white px-2 py-1 rounded-full font-bold shadow-sm">
+                                                                                Your Answer
+                                                                            </span>
+                                                                        )}
                                                                     </Label>
+                                                                    {/* Icons kept for extra visual cue */}
                                                                     {submitted && option === question.correct_answer && (
                                                                         <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
                                                                     )}
