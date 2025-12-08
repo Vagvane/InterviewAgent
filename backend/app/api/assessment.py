@@ -111,7 +111,7 @@ def submit_assessment(
     # Save attempt
     attempt = UserAssessmentAttempt(
         user_id=current_user.id,
-        assessment_id=None, # We don't have real assessment IDs yet in this mock flow
+        assessment_id=assessment.id if assessment else None,
         score=score,
         responses=responses.get("responses"),
         timestamp=datetime.utcnow()

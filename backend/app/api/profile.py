@@ -75,3 +75,118 @@ def get_user_stats(
         "total_completed": total_completed,
         "skills_analysis": skills
     }
+
+@router.get("/history", response_model=Any)
+def get_user_history(
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_user)
+) -> Any:
+    """
+    Get full history lists for all activities.
+    """
+    # 1. Assessments
+    assessments_query = db.query(UserAssessmentAttempt).filter(UserAssessmentAttempt.user_id == current_user.id).order_by(UserAssessmentAttempt.timestamp.desc()).all()
+    assessments_data = []
+    for a in assessments_query:
+        # Fetch related assessment title if possible (simple for now)
+        assessments_data.append({
+            "id": a.id,
+            "type": "Assessment",
+            "title": f"Daily Assessment {a.timestamp.date()}", 
+            "score": f"{a.score}%" if a.score is not None else "N/A",
+            "date": a.timestamp.strftime("%Y-%m-%d"),
+            "status": "Completed"
+        })
+
+    # 2. Coding
+    coding_query = db.query(CodingSubmission).filter(CodingSubmission.user_id == current_user.id).order_by(CodingSubmission.timestamp.desc()).all()
+    coding_data = []
+    for c in coding_query:
+        coding_data.append({
+            "id": c.id,
+            "type": "Coding",
+            "title": f"Coding Problem #{c.problem_id}", # Ideal: Join with Problem table
+            "score": c.status,
+            "date": c.timestamp.strftime("%Y-%m-%d"),
+            "status": c.status
+        })
+
+    # 3. Interviews
+    interviews_query = db.query(InterviewSession).filter(InterviewSession.user_id == current_user.id).order_by(InterviewSession.created_at.desc()).all()
+    interview_data = []
+    for i in interviews_query:
+        interview_data.append({
+            "id": i.id,
+            "type": "Interview",
+            "title": "Mock Interview Session",
+            "score": f"{i.score}/100" if i.score else "Pending",
+            "date": i.created_at.strftime("%Y-%m-%d"),
+            "status": i.status
+        })
+    
+    return {
+        "assessments": assessments_data,
+        "coding": coding_data,
+        "interviews": interview_data
+    }
+
+@router.get("/history/assessment/{id}", response_model=Any)
+def get_assessment_details(
+    id: int,
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_user)
+) -> Any:
+    attempt = db.query(UserAssessmentAttempt).filter(UserAssessmentAttempt.id == id, UserAssessmentAttempt.user_id == current_user.id).first()
+    if not attempt:
+        return {"error": "Not found"}
+    
+    # Reconstruct details (In a real app, join with Questions)
+    # For now, we return the stored responses
+    return {
+        "title": f"Daily Assessment {attempt.timestamp.date()}",
+        "score": attempt.score,
+        "date": attempt.timestamp.strftime("%Y-%m-%d"),
+        "responses": attempt.responses # This contains the logical QA map
+    }
+
+@router.get("/history/coding/{id}", response_model=Any)
+def get_coding_details(
+    id: int,
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_user)
+) -> Any:
+    sub = db.query(CodingSubmission).filter(CodingSubmission.id == id, CodingSubmission.user_id == current_user.id).first()
+    if not sub:
+        return {"error": "Not found"}
+        
+    return {
+        "title": f"Coding Problem #{sub.problem_id}",
+        "status": sub.status,
+        "date": sub.timestamp.strftime("%Y-%m-%d"),
+        "language": sub.language,
+        "code": sub.code
+    }
+
+@router.get("/history/interview/{id}", response_model=Any)
+def get_interview_details(
+    id: int,
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_user)
+) -> Any:
+    session = db.query(InterviewSession).filter(InterviewSession.id == id, InterviewSession.user_id == current_user.id).first()
+    if not session:
+        return {"error": "Not found"}
+        
+    # Get messages
+    chat_history = []
+    for m in session.messages:
+        chat_history.append({"role": m.role, "content": m.content})
+        
+    return {
+        "title": "Mock Interview Session",
+        "date": session.created_at.strftime("%Y-%m-%d"),
+        "score": session.score,
+        "feedback": session.feedback,
+        "transcript": chat_history,
+        "job_description": session.job_description
+    }

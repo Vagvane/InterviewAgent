@@ -125,11 +125,11 @@ export default function DashboardPage() {
                         <CardContent className="p-6">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-2xl">
-                                    <Clock className="h-6 w-6" />
+                                    <Code className="h-6 w-6" />
                                 </div>
                             </div>
-                            <p className="text-sm text-muted-foreground font-medium">Study Hours</p>
-                            <h4 className="text-3xl font-bold mt-1">12h</h4>
+                            <p className="text-sm text-muted-foreground font-medium">Coding Solved</p>
+                            <h4 className="text-3xl font-bold mt-1">{stats?.coding?.passed || 0}</h4>
                         </CardContent>
                     </Card>
                 </div>

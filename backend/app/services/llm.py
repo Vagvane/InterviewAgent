@@ -83,27 +83,37 @@ def generate_daily_questions():
             2. EXACTLY 5 Multiple Choice Questions (MCQs) covering "DSA".
             3. EXACTLY 5 Multiple Choice Questions (MCQs) covering "OOPs".
             4. EXACTLY 1 Subjective Question covering "Subjective".
-            5. OUTPUT MUST BE RAW JSON ONLY. NO MARKDOWN. NO EXPLANATIONS.
+            5. RESPONSE MUST BE A SINGLE VALID JSON ARRAY. 
+            6. NO MARKDOWN formatting (do not use ```json).
+            7. ESCAPE all internal quotes in strings.
             
-            Response Format (JSON Array):
+            Response Structure:
             [
-                {"category": "Java", "type": "mcq", "text": "Question?", "options": ["A", "B", "C", "D"], "correct_answer": "Correct Option Text"},
+                {
+                    "category": "Java", 
+                    "type": "mcq", 
+                    "text": "Question text here?", 
+                    "options": ["Option A", "Option B", "Option C", "Option D"], 
+                    "correct_answer": "Option A"
+                },
                 ...
-                {"category": "DSA", "type": "mcq", "text": "Question?", "options": ["A", "B", "C", "D"], "correct_answer": "Correct Option Text"},
-                ...
-                {"category": "OOPs", "type": "mcq", "text": "Question?", "options": ["A", "B", "C", "D"], "correct_answer": "Correct Option Text"},
-                ...
-                {"category": "Subjective", "type": "subjective", "text": "Question?", "options": [], "correct_answer": "Model Answer"}
+                {
+                    "category": "Subjective",
+                    "type": "subjective",
+                    "text": "Question text?",
+                    "options": [],
+                    "correct_answer": "Model Answer"
+                }
             ]
             """
             
             response = client.chat.completions.create(
                 model=settings.OPENAI_MODEL_NAME,
                 messages=[
-                    {"role": "system", "content": "You are a technical interviewer. Return strictly valid JSON array only."},
+                    {"role": "system", "content": "You are a backend API that outputs strictly valid JSON array only. No Markdown. No checks."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.7,
+                temperature=0.4, # Lower temperature for more deterministic formatting
                 timeout=60.0
             )
             
