@@ -75,13 +75,22 @@ def generate_daily_questions():
                 base_url=settings.OPENAI_API_BASE
             )
             
-            prompt = """
+            # Randomize topics to prevent identical first questions
+            java_topics = ["Multithreading", "Streams API", "Collections Framework", "Generics", "JVM Internals", "Exception Handling", "Java 8 Features", "Spring Boot Basics"]
+            dsa_topics = ["Arrays & Strings", "Linked Lists", "Trees & Graphs", "Sorting & Searching", "Dynamic Programming", "Stacks & Queues", "Heaps", "Hash Maps"]
+            oops_topics = ["Polymorphism", "Inheritance", "Encapsulation", "Abstraction", "Design Patterns", "SOLID Principles", "Interface vs Abstract Class"]
+            
+            selected_java = random.choice(java_topics)
+            selected_dsa = random.choice(dsa_topics)
+            selected_oops = random.choice(oops_topics)
+
+            prompt = f"""
             Generate a daily technical assessment for a Full Stack Developer.
             
             Requirements:
-            1. EXACTLY 5 Multiple Choice Questions (MCQs) covering "Java".
-            2. EXACTLY 5 Multiple Choice Questions (MCQs) covering "DSA".
-            3. EXACTLY 5 Multiple Choice Questions (MCQs) covering "OOPs".
+            1. EXACTLY 5 Multiple Choice Questions (MCQs) covering "Java" (Focus on {selected_java}).
+            2. EXACTLY 5 Multiple Choice Questions (MCQs) covering "DSA" (Focus on {selected_dsa}).
+            3. EXACTLY 5 Multiple Choice Questions (MCQs) covering "OOPs" (Focus on {selected_oops}).
             4. EXACTLY 1 Subjective Question covering "Subjective".
             5. RESPONSE MUST BE A SINGLE VALID JSON ARRAY. 
             6. NO MARKDOWN formatting (do not use ```json).
@@ -89,21 +98,21 @@ def generate_daily_questions():
             
             Response Structure:
             [
-                {
+                {{
                     "category": "Java", 
                     "type": "mcq", 
                     "text": "Question text here?", 
                     "options": ["Option A", "Option B", "Option C", "Option D"], 
                     "correct_answer": "Option A"
-                },
+                }},
                 ...
-                {
+                {{
                     "category": "Subjective",
                     "type": "subjective",
                     "text": "Question text?",
                     "options": [],
                     "correct_answer": "Model Answer"
-                }
+                }}
             ]
             """
             
