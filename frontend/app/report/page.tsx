@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import api from "@/lib/api"
 import { Loader2 } from "lucide-react"
 
-export default function ReportPage() {
+function ReportContent() {
     const searchParams = useSearchParams()
     const type = searchParams.get("type") // 'assessment', 'coding', 'interview'
     const id = searchParams.get("id")
@@ -114,5 +114,13 @@ export default function ReportPage() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function ReportPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin" /></div>}>
+            <ReportContent />
+        </Suspense>
     )
 }
