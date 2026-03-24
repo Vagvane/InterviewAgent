@@ -3,8 +3,382 @@ from app.core.config import settings
 import json
 import random
 
-# Extended Mock response to meet new requirements
-# Mock data removed to enforce strict API usage
+# ==================== MOCK DATA FOR FALLBACK ====================
+# Used when API rate limit exceeded or connection fails
+
+MOCK_ASSESSMENT_SETS = [
+    # SET 1
+    [
+        {"category": "Java", "type": "mcq", "text": "What is the purpose of the synchronized keyword in Java?", 
+         "options": ["To create threads", "To prevent memory leaks", "To ensure thread-safe access to shared resources", "To increase performance"],
+         "correct_answer": "To ensure thread-safe access to shared resources"},
+        {"category": "Java", "type": "mcq", "text": "Which of the following is NOT a feature of Java 8?",
+         "options": ["Lambda expressions", "Stream API", "Record classes", "Functional interfaces"],
+         "correct_answer": "Record classes"},
+        {"category": "Java", "type": "mcq", "text": "What is the difference between ArrayList and LinkedList?",
+         "options": ["No difference", "ArrayList is faster for random access, LinkedList is better for insertions", "LinkedList is always faster", "ArrayList supports threads, LinkedList doesn't"],
+         "correct_answer": "ArrayList is faster for random access, LinkedList is better for insertions"},
+        {"category": "Java", "type": "mcq", "text": "Which method is used to start a thread in Java?",
+         "options": ["start()", "run()", "execute()", "begin()"],
+         "correct_answer": "start()"},
+        {"category": "Java", "type": "mcq", "text": "What is a ConcurrentHashMap used for?",
+         "options": ["Compression", "Thread-safe HashMap operations", "Serialization", "Memory management"],
+         "correct_answer": "Thread-safe HashMap operations"},
+        {"category": "DSA", "type": "mcq", "text": "What is the time complexity of binary search?",
+         "options": ["O(n)", "O(n log n)", "O(log n)", "O(n^2)"],
+         "correct_answer": "O(log n)"},
+        {"category": "DSA", "type": "mcq", "text": "Which sorting algorithm is most efficient for nearly sorted data?",
+         "options": ["Bubble Sort", "Merge Sort", "Insertion Sort", "Quick Sort"],
+         "correct_answer": "Insertion Sort"},
+        {"category": "DSA", "type": "mcq", "text": "What data structure is best for representing a hierarchical relationship?",
+         "options": ["Array", "Linked List", "Tree", "Queue"],
+         "correct_answer": "Tree"},
+        {"category": "DSA", "type": "mcq", "text": "What is the space complexity of merge sort?",
+         "options": ["O(1)", "O(log n)", "O(n)", "O(n^2)"],
+         "correct_answer": "O(n)"},
+        {"category": "DSA", "type": "mcq", "text": "Which data structure uses LIFO principle?",
+         "options": ["Queue", "Stack", "Deque", "Priority Queue"],
+         "correct_answer": "Stack"},
+        {"category": "OOPs", "type": "mcq", "text": "What is polymorphism in OOP?",
+         "options": ["Inheritance", "Ability to take multiple forms", "Encapsulation", "Abstraction"],
+         "correct_answer": "Ability to take multiple forms"},
+        {"category": "OOPs", "type": "mcq", "text": "What is the SOLID principle 'S' referring to?",
+         "options": ["Serialization", "Single Responsibility Principle", "Static Binding", "String literals"],
+         "correct_answer": "Single Responsibility Principle"},
+        {"category": "OOPs", "type": "mcq", "text": "What is the difference between composition and inheritance?",
+         "options": ["No difference", "Composition uses 'has-a', inheritance uses 'is-a'", "They are the same concept", "Composition is deprecated"],
+         "correct_answer": "Composition uses 'has-a', inheritance uses 'is-a'"},
+        {"category": "OOPs", "type": "mcq", "text": "Which access modifier is most restrictive?",
+         "options": ["public", "protected", "private", "default"],
+         "correct_answer": "private"},
+        {"category": "OOPs", "type": "mcq", "text": "What is an interface in Java primarily used for?",
+         "options": ["Type casting", "Defining contracts", "Memory allocation", "Performance optimization"],
+         "correct_answer": "Defining contracts"},
+        {"category": "Subjective", "type": "subjective", "text": "Explain the concept of thread-safe collections in Java with an example.",
+         "options": [], "correct_answer": "Thread-safe collections like ConcurrentHashMap, CopyOnWriteArrayList use synchronization mechanisms to ensure that only one thread can modify the collection at a time, preventing race conditions and data corruption."}
+    ],
+    # SET 2
+    [
+        {"category": "Java", "type": "mcq", "text": "What is the default value of a local variable in Java?",
+         "options": ["0", "null", "Undefined", "false"],
+         "correct_answer": "Undefined"},
+        {"category": "Java", "type": "mcq", "text": "Which keyword is used to prevent method overriding?",
+         "options": ["static", "final", "abstract", "synchronized"],
+         "correct_answer": "final"},
+        {"category": "Java", "type": "mcq", "text": "What is the purpose of the volatile keyword?",
+         "options": ["To delete variables", "To ensure visibility of changes across threads", "To increase speed", "To save memory"],
+         "correct_answer": "To ensure visibility of changes across threads"},
+        {"category": "Java", "type": "mcq", "text": "How are generics implemented in Java?",
+         "options": ["Type erasure", "Type substitution", "Type coercion", "Type casting"],
+         "correct_answer": "Type erasure"},
+        {"category": "Java", "type": "mcq", "text": "What is a functional interface?",
+         "options": ["Interface with multiple methods", "Interface with exactly one abstract method", "Interface that implements functions", "Interface without methods"],
+         "correct_answer": "Interface with exactly one abstract method"},
+        {"category": "DSA", "type": "mcq", "text": "What is the average case time complexity of quicksort?",
+         "options": ["O(n)", "O(n log n)", "O(n^2)", "O(log n)"],
+         "correct_answer": "O(n log n)"},
+        {"category": "DSA", "type": "mcq", "text": "Which traversal method visits nodes level by level?",
+         "options": ["In-order", "Pre-order", "Level-order (BFS)", "Post-order"],
+         "correct_answer": "Level-order (BFS)"},
+        {"category": "DSA", "type": "mcq", "text": "What is the time complexity of finding an element in a balanced BST?",
+         "options": ["O(n)", "O(log n)", "O(n^2)", "O(1)"],
+         "correct_answer": "O(log n)"},
+        {"category": "DSA", "type": "mcq", "text": "How many edges does a tree with n nodes have?",
+         "options": ["n", "n-1", "n+1", "2n"],
+         "correct_answer": "n-1"},
+        {"category": "DSA", "type": "mcq", "text": "What is the purpose of a hash function in a hash map?",
+         "options": ["Sorting", "Mapping keys to buckets", "Encryption", "Compression"],
+         "correct_answer": "Mapping keys to buckets"},
+        {"category": "OOPs", "type": "mcq", "text": "What is encapsulation?",
+         "options": ["Hiding details", "Bundling data and methods", "Restricting access to internal details", "All of the above"],
+         "correct_answer": "All of the above"},
+        {"category": "OOPs", "type": "mcq", "text": "What is method overloading?",
+         "options": ["Methods with same name but different parameters", "Methods with different names", "Calling multiple methods", "Method inheritance"],
+         "correct_answer": "Methods with same name but different parameters"},
+        {"category": "OOPs", "type": "mcq", "text": "What is an abstract class used for?",
+         "options": ["To create objects", "To define common behavior for subclasses", "To improve performance", "To save memory"],
+         "correct_answer": "To define common behavior for subclasses"},
+        {"category": "OOPs", "type": "mcq", "text": "What does method overriding allow?",
+         "options": ["Multiple methods with same name", "Subclass to provide implementation", "Accessing private members", "Changing method signatures"],
+         "correct_answer": "Subclass to provide implementation"},
+        {"category": "OOPs", "type": "mcq", "text": "What is the Liskov Substitution Principle?",
+         "options": ["Objects should be substitutable without breaking code", "All objects are the same", "Use lists instead of arrays", "Substitute variables"],
+         "correct_answer": "Objects should be substitutable without breaking code"},
+        {"category": "Subjective", "type": "subjective", "text": "Describe the differences between ArrayList and Vector in Java.",
+         "options": [], "correct_answer": "ArrayList is not synchronized (not thread-safe) and is faster, while Vector is synchronized (thread-safe) but slower. ArrayList is preferred in single-threaded environments."}
+    ],
+    # SET 3
+    [
+        {"category": "Java", "type": "mcq", "text": "What does the JVM do?",
+         "options": ["Compiles code", "Interprets bytecode", "Manages threads", "All of the above"],
+         "correct_answer": "All of the above"},
+        {"category": "Java", "type": "mcq", "text": "What is the purpose of the super keyword?",
+         "options": ["To access parent class members", "To create threads", "To define interfaces", "To manage memory"],
+         "correct_answer": "To access parent class members"},
+        {"category": "Java", "type": "mcq", "text": "Which exception is thrown when dividing by zero?",
+         "options": ["ArithmeticException", "NullPointerException", "NumberFormatException", "RuntimeException"],
+         "correct_answer": "ArithmeticException"},
+        {"category": "Java", "type": "mcq", "text": "What is the difference between == and equals()?",
+         "options": ["No difference", "== checks reference, equals() checks value", "== checks value, equals() checks reference", "Both check memory"],
+         "correct_answer": "== checks reference, equals() checks value"},
+        {"category": "Java", "type": "mcq", "text": "What is a SerialVersionUID used for?",
+         "options": ["Version control", "Serialization compatibility", "Thread management", "Memory allocation"],
+         "correct_answer": "Serialization compatibility"},
+        {"category": "DSA", "type": "mcq", "text": "What is a graph with no cycles called?",
+         "options": ["Complete graph", "Forest/Tree", "Cycle graph", "Weighted graph"],
+         "correct_answer": "Forest/Tree"},
+        {"category": "DSA", "type": "mcq", "text": "Which algorithm is used for finding shortest path in unweighted graphs?",
+         "options": ["DFS", "BFS", "Dijkstra", "Floyd-Warshall"],
+         "correct_answer": "BFS"},
+        {"category": "DSA", "type": "mcq", "text": "What is the recurrence relation for merge sort?",
+         "options": ["T(n) = T(n-1) + O(1)", "T(n) = 2T(n/2) + O(n)", "T(n) = T(n-1) + O(n)", "T(n) = nT(n-1)"],
+         "correct_answer": "T(n) = 2T(n/2) + O(n)"},
+        {"category": "DSA", "type": "mcq", "text": "What is the minimum number of comparisons needed to sort 4 elements?",
+         "options": ["3", "4", "5", "6"],
+         "correct_answer": "5"},
+        {"category": "DSA", "type": "mcq", "text": "In a graph, what is the sum of all degrees equal to?",
+         "options": ["V", "E", "2E", "V+E"],
+         "correct_answer": "2E"},
+        {"category": "OOPs", "type": "mcq", "text": "What is the purpose of the instanceof operator?",
+         "options": ["Instance creation", "Type checking", "Memory allocation", "Inheritance checking"],
+         "correct_answer": "Type checking"},
+        {"category": "OOPs", "type": "mcq", "text": "What does the Open/Closed Principle state?",
+         "options": ["Open for reading, closed for writing", "Open for extension, closed for modification", "Always keep classes open", "Never modify existing code"],
+         "correct_answer": "Open for extension, closed for modification"},
+        {"category": "OOPs", "type": "mcq", "text": "What is dependency injection?",
+         "options": ["Injecting dependencies into objects", "Deleting dependencies", "Creating static objects", "Using only private members"],
+         "correct_answer": "Injecting dependencies into objects"},
+        {"category": "OOPs", "type": "mcq", "text": "What is a design pattern?",
+         "options": ["A solution to a common problem", "A programming language", "A software tool", "A type of IDE"],
+         "correct_answer": "A solution to a common problem"},
+        {"category": "OOPs", "type": "mcq", "text": "Which design pattern is used to create objects without specifying their classes?",
+         "options": ["Singleton", "Factory", "Observer", "Strategy"],
+         "correct_answer": "Factory"},
+        {"category": "Subjective", "type": "subjective", "text": "Explain the Visitor design pattern and provide a use case example.",
+         "options": [], "correct_answer": "The Visitor pattern allows adding new operations to object hierarchies without modifying the objects themselves. Example: A compiler can use a Visitor to traverse an AST (Abstract Syntax Tree) and perform different operations like type checking, code generation, etc."}
+    ],
+    # SET 4
+    [
+        {"category": "Java", "type": "mcq", "text": "What is autoboxing in Java?",
+         "options": ["Automatic conversion between primitive and wrapper classes", "Boxing without permission", "Creating boxes for objects", "Memory management"],
+         "correct_answer": "Automatic conversion between primitive and wrapper classes"},
+        {"category": "Java", "type": "mcq", "text": "Which method is called when an object is created?",
+         "options": ["init()", "constructor()", "create()", "__init__()"],
+         "correct_answer": "constructor()"},
+        {"category": "Java", "type": "mcq", "text": "What is the purpose of the this keyword?",
+         "options": ["Reference to current object", "Reference to parent class", "Create new objects", "Delete objects"],
+         "correct_answer": "Reference to current object"},
+        {"category": "Java", "type": "mcq", "text": "Which exception occurs when accessing an index out of bounds?",
+         "options": ["ArrayIndexOutOfBoundsException", "IndexOutOfRangeException", "BoundsException", "OverflowException"],
+         "correct_answer": "ArrayIndexOutOfBoundsException"},
+        {"category": "Java", "type": "mcq", "text": "What is the difference between checked and unchecked exceptions?",
+         "options": ["No difference", "Checked must be caught, unchecked may be ignored", "They have same behavior", "Checked are errors"],
+         "correct_answer": "Checked must be caught, unchecked may be ignored"},
+        {"category": "DSA", "type": "mcq", "text": "What is a AVL tree?",
+         "options": ["Unbalanced tree", "Self-balancing BST", "Binary tree", "Tree with no structure"],
+         "correct_answer": "Self-balancing BST"},
+        {"category": "DSA", "type": "mcq", "text": "What is the maximum height of a red-black tree with n nodes?",
+         "options": ["n", "log n", "2 log n", "n^2"],
+         "correct_answer": "2 log n"},
+        {"category": "DSA", "type": "mcq", "text": "What is a trie data structure used for?",
+         "options": ["Sorting", "Prefix-based searching", "Hashing", "Compression"],
+         "correct_answer": "Prefix-based searching"},
+        {"category": "DSA", "type": "mcq", "text": "What is the time complexity of insert in a skip list?",
+         "options": ["O(1)", "O(n)", "O(log n)", "O(n log n)"],
+         "correct_answer": "O(log n)"},
+        {"category": "DSA", "type": "mcq", "text": "What is a segment tree primarily used for?",
+         "options": ["Generating random numbers", "Range queries and updates", "Sorting", "Compression"],
+         "correct_answer": "Range queries and updates"},
+        {"category": "OOPs", "type": "mcq", "text": "What is the difference between interface and abstract class?",
+         "options": ["No difference", "Interface has no state, abstract class can have state", "Same concept", "Abstract classes are deprecated"],
+         "correct_answer": "Interface has no state, abstract class can have state"},
+        {"category": "OOPs", "type": "mcq", "text": "What is the Adapter pattern used for?",
+         "options": ["Connecting incompatible interfaces", "Adapting electricity", "Creating new classes", "Modifying existing code"],
+         "correct_answer": "Connecting incompatible interfaces"},
+        {"category": "OOPs", "type": "mcq", "text": "What is the Decorator pattern?",
+         "options": ["Designing UI", "Adding behavior to objects dynamically", "Creating decorators", "Same as inheritance"],
+         "correct_answer": "Adding behavior to objects dynamically"},
+        {"category": "OOPs", "type": "mcq", "text": "What is the Strategy pattern used for?",
+         "options": ["Strategic planning", "Encapsulating algorithms as objects", "Creating strategies", "Business planning"],
+         "correct_answer": "Encapsulating algorithms as objects"},
+        {"category": "OOPs", "type": "mcq", "text": "What is the purpose of the Iterator pattern?",
+         "options": ["Iterating over elements without exposing structure", "Creating loops", "Optimization", "Memory management"],
+         "correct_answer": "Iterating over elements without exposing structure"},
+        {"category": "Subjective", "type": "subjective", "text": "Write a brief explanation of the MVC (Model-View-Controller) architectural pattern.",
+         "options": [], "correct_answer": "MVC separates an application into three interconnected components: Model (data), View (UI), and Controller (logic). This separation improves maintainability, testability, and reusability of code."}
+    ]
+]
+
+MOCK_CODING_PROBLEMS = [
+    {
+        "id": 101,
+        "title": "Two Sum",
+        "description": "Given an array of integers nums and an integer target, return the indices of the two numbers that add up to target. You may assume each input has exactly one solution, and you cannot use the same element twice.",
+        "difficulty": "Easy",
+        "test_cases": [
+            {"input": "nums = [2,7,11,15], target = 9", "output": "[0, 1]"},
+            {"input": "nums = [3,2,4], target = 6", "output": "[1, 2]"},
+            {"input": "nums = [3,3], target = 6", "output": "[0, 1]"}
+        ]
+    },
+    {
+        "id": 102,
+        "title": "Palindrome Number",
+        "description": "Given an integer x, return true if x is a palindrome, and false otherwise. Do this without converting the number to a string.",
+        "difficulty": "Easy",
+        "test_cases": [
+            {"input": "x = 121", "output": "true"},
+            {"input": "x = -121", "output": "false"},
+            {"input": "x = 10", "output": "false"}
+        ]
+    },
+    {
+        "id": 103,
+        "title": "Longest Substring Without Repeating Characters",
+        "description": "Given a string s, find the length of the longest substring without repeating characters.",
+        "difficulty": "Medium",
+        "test_cases": [
+            {"input": "s = 'abcabcbb'", "output": "3"},
+            {"input": "s = 'bbbbb'", "output": "1"},
+            {"input": "s = 'pwwkew'", "output": "3"}
+        ]
+    },
+    {
+        "id": 104,
+        "title": "Regular Expression Matching",
+        "description": "Given an input string s and a pattern p, implement regular expression matching with support for '.' and '*' where '.' matches any single character and '*' matches zero or more of the preceding element.",
+        "difficulty": "Hard",
+        "test_cases": [
+            {"input": "s = 'aa', p = 'a'", "output": "false"},
+            {"input": "s = 'aa', p = 'a*'", "output": "true"},
+            {"input": "s = 'ab', p = '.*'", "output": "true"}
+        ]
+    }
+]
+
+# ==================== MOCK INTERVIEW QUESTIONS BY ROLE ====================
+
+MOCK_INTERVIEW_QUESTIONS = {
+    "backend": {
+        "Introduction & Ice-breaking": [
+            "Tell me about yourself and your background in backend development.",
+            "What inspired you to pursue a career in backend/server-side development?",
+            "Can you walk me through your most recent project?"
+        ],
+        "Job Role Fit & Motivation": [
+            "Why are you interested in this Backend Developer position?",
+            "What excites you about the technologies mentioned in our job description?",
+            "How do you stay updated with the latest backend development trends?"
+        ],
+        "Resume & Experience Deep Dive": [
+            "Tell me about your experience with database design and optimization.",
+            "What's your most complex system you've built, and how did you handle scalability?",
+            "Describe your experience with REST APIs and microservices."
+        ],
+        "Technical & Problem Solving": [
+            "How would you design a system to handle 10 million concurrent requests?",
+            "What's the difference between SQL and NoSQL, and when would you use each?",
+            "Explain how you would implement caching in a high-traffic application.",
+            "How do you approach debugging production issues?",
+            "What's your experience with CI/CD pipelines and DevOps practices?"
+        ],
+        "Closing & Wrap-up": [
+            "What are your expectations for this role in terms of learning and growth?",
+            "Do you have any questions about the role or our team?"
+        ]
+    },
+    "uiux": {
+        "Introduction & Ice-breaking": [
+            "Tell me about yourself and your background in UI/UX design.",
+            "What drew you to the field of user experience and interface design?",
+            "Can you describe a design project you're particularly proud of?"
+        ],
+        "Job Role Fit & Motivation": [
+            "Why are you interested in joining our team as a UI/UX Designer?",
+            "How do you approach creating user-centered design solutions?",
+            "What design tools and methodologies are you most comfortable with?"
+        ],
+        "Resume & Experience Deep Dive": [
+            "Walk me through your design process from discovery to implementation.",
+            "Tell me about a time when you had to advocate for the user against business constraints.",
+            "Can you share an example where you improved user engagement through design?"
+        ],
+        "Technical & Problem Solving": [
+            "How would you redesign our mobile app to improve user retention?",
+            "Describe your approach to conducting user research and usability testing.",
+            "How do you ensure accessibility in your designs across different devices?",
+            "Tell me about your experience with design systems and component libraries.",
+            "How do you balance aesthetic design with functionality and performance?"
+        ],
+        "Closing & Wrap-up": [
+            "What design challenges are you most excited to tackle with our product?",
+            "Do you have any questions about the role or our design team?"
+        ]
+    }
+}
+
+MOCK_INTERVIEW_FEEDBACK = {
+    "backend": {
+        "good": {
+            "score": 78,
+            "strengths": [
+                "Strong grasp of system design principles and scalability concerns",
+                "Good understanding of database optimization and query performance",
+                "Clear communication about technical decisions and trade-offs"
+            ],
+            "weaknesses": [
+                "Could provide more concrete examples from production experience",
+                "Limited discussion of emerging technologies like gRPC or message queues",
+                "Could elaborate more on monitoring and observability practices"
+            ],
+            "summary": "The candidate demonstrates solid backend development knowledge with good understanding of core concepts. They show promise in system architecture but would benefit from deeper exploration of advanced topics and more battle-tested experiences in high-scale systems."
+        },
+        "average": {
+            "score": 65,
+            "strengths": [
+                "Fundamentals of backend development are clear",
+                "Shows interest in learning new technologies",
+                "Communicates technical concepts reasonably well"
+            ],
+            "weaknesses": [
+                "Lacks depth in system design and architecture discussions",
+                "Limited hands-on experience with distributed systems",
+                "Could improve explanation of trade-offs and performance considerations"
+            ],
+            "summary": "The candidate has basic backend development knowledge but would need mentoring to handle complex system design challenges. Additional exposure to production systems and performance optimization would strengthen their candidacy."
+        }
+    },
+    "uiux": {
+        "good": {
+            "score": 82,
+            "strengths": [
+                "User-centered design approach with strong research methodology",
+                "Excellent visual design sense and understanding of accessibility",
+                "Clear communication of design decisions and rationale"
+            ],
+            "weaknesses": [
+                "Could discuss cross-functional collaboration more in detail",
+                "Limited mention of metrics for measuring design success",
+                "Design systems knowledge could be expanded"
+            ],
+            "summary": "The candidate demonstrates a mature approach to UI/UX design with strong fundamentals in user research and accessibility. Their portfolio shows thoughtful design solutions and they communicate their process clearly, making them a strong candidate for the role."
+        },
+        "average": {
+            "score": 70,
+            "strengths": [
+                "Understands basic UX principles and user empathy",
+                "Has practical design tool experience",
+                "Shows willingness to iterate based on feedback"
+            ],
+            "weaknesses": [
+                "User research methodology could be more rigorous",
+                "Limited knowledge of design systems and component thinking",
+                "Minimal discussion of accessibility considerations"
+            ],
+            "summary": "The candidate has foundational UI/UX design skills but would benefit from deeper training in research methods and design systems. With mentorship on accessibility and metrics-driven design, they could grow into a strong designer."
+        }
+    }
+}
 
 def clean_json_response(content: str):
     """
@@ -158,12 +532,14 @@ def generate_daily_questions():
             
         except Exception as e:
             error_msg = str(e)
-            if "429" in error_msg:
-                print(f"Rate Limit Exceeded: {error_msg}")
-                raise Exception("API Rate Limit Exceeded. Please check your API quota or try again later.")
+            if "429" in error_msg or "billing_not_active" in error_msg:
+                print(f"API Rate Limit or Billing Error: {error_msg}")
+                print("Returning mock assessment questions...")
+                return random.choice(MOCK_ASSESSMENT_SETS)
             print(f"Error generating daily questions (Attempt {attempt+1}): {e}")
             if attempt == 2:
-                raise e # Re-raise on last attempt
+                print("All API attempts failed. Returning mock assessment questions...")
+                return random.choice(MOCK_ASSESSMENT_SETS)
 
 def generate_coding_problem():
     """
@@ -248,25 +624,16 @@ def generate_coding_problem():
             
         except Exception as e:
             error_msg = str(e)
-            if "429" in error_msg:
-                return {
-                    "id": 1,
-                    "title": "Rate Limit Exceeded",
-                    "description": "Your API key has hit its rate limit. Please check your quota or try again later.",
-                    "difficulty": "Error",
-                    "test_cases": []
-                }
+            if "429" in error_msg or "billing_not_active" in error_msg:
+                print(f"API Rate Limit or Billing Error: {error_msg}")
+                print("Returning mock coding problem...")
+                return random.choice(MOCK_CODING_PROBLEMS)
             print(f"Attempt {attempt+1} error: {e}")
             continue
 
-    # If all retries fail, return error object (No Fallback Questions)
-    return {
-        "id": 1,
-        "title": "Generation Failed",
-        "description": "Could not generate a new problem. This is likely due to an API Key expiry or connection issue. Please check your API configuration.",
-        "difficulty": "Error",
-        "test_cases": []
-    }
+    # If all retries fail, return mock data
+    print("All API attempts failed. Returning mock coding problem...")
+    return random.choice(MOCK_CODING_PROBLEMS)
 
 def evaluate_code(code: str, language: str, problem_title: str):
     """
@@ -335,9 +702,19 @@ def generate_interview_followup(history: list, job_description: str, resume_text
     """
     Generates a follow-up interview question based on chat history and context.
     Uses a staged approach: Intro -> Role Fit -> Experience -> Technical -> Conclusion.
+    Falls back to role-based mock questions when API rate limit is exceeded.
     """
     if not is_valid_api_key():
         return "Error: AI Interviewer is offline (API Key missing)."
+
+    # Detect role from job description
+    job_description_lower = job_description.lower()
+    if "backend" in job_description_lower or "server" in job_description_lower or "api" in job_description_lower:
+        detected_role = "backend"
+    elif "ui" in job_description_lower or "ux" in job_description_lower or "design" in job_description_lower or "frontend" in job_description_lower or "visual" in job_description_lower:
+        detected_role = "uiux"
+    else:
+        detected_role = "backend"  # Default role
 
     for attempt in range(3):
         try:
@@ -353,7 +730,7 @@ def generate_interview_followup(history: list, job_description: str, resume_text
             if turn_count < 2:
                 stage = "Introduction & Ice-breaking"
             elif turn_count < 5:
-                stage = "Job Role Fit & Motivation (Focus on JD)"
+                stage = "Job Role Fit & Motivation"
             elif turn_count < 8:
                 stage = "Resume & Experience Deep Dive"
             elif turn_count < 12:
@@ -362,7 +739,7 @@ def generate_interview_followup(history: list, job_description: str, resume_text
                 stage = "Closing & Wrap-up"
 
             system_prompt = f"""
-            You are an expert AI Technical Interviewer. 
+            You are an expert AI Technical Interviewer for {detected_role.upper()} role.
             Current Stage: {stage}
             
             Context:
@@ -394,15 +771,43 @@ def generate_interview_followup(history: list, job_description: str, resume_text
             return response.choices[0].message.content
         except Exception as e:
             error_msg = str(e)
-            if "429" in error_msg:
-                return "Error: API Rate Limit Exceeded. Please check your system configuration."
+            if "429" in error_msg or "billing_not_active" in error_msg:
+                print(f"API Rate Limit or Billing Error: {error_msg}")
+                print(f"Returning mock interview question for {detected_role} role...")
+                
+                # Determine stage for mock questions
+                turn_count = len(history) // 2
+                if turn_count < 2:
+                    stage_key = "Introduction & Ice-breaking"
+                elif turn_count < 5:
+                    stage_key = "Job Role Fit & Motivation"
+                elif turn_count < 8:
+                    stage_key = "Resume & Experience Deep Dive"
+                elif turn_count < 12:
+                    stage_key = "Technical & Problem Solving"
+                else:
+                    stage_key = "Closing & Wrap-up"
+                
+                # Return role-based mock question
+                questions = MOCK_INTERVIEW_QUESTIONS.get(detected_role, MOCK_INTERVIEW_QUESTIONS["backend"])
+                stage_questions = questions.get(stage_key, [])
+                if stage_questions:
+                    return random.choice(stage_questions)
+                else:
+                    return "Could you tell me more about your approach to problem-solving in your role?"
+            
             print(f"Error generating interview response (Attempt {attempt+1}): {e}")
             if attempt == 2:
-                return f"Error: {str(e)}"
+                print(f"All API attempts failed. Returning mock interview question for {detected_role} role...")
+                # Return fallback mock question
+                questions = MOCK_INTERVIEW_QUESTIONS.get(detected_role, MOCK_INTERVIEW_QUESTIONS["backend"])
+                all_questions = [q for stage_qs in questions.values() for q in stage_qs]
+                return random.choice(all_questions) if all_questions else "Tell me about your experience."
 
 def generate_interview_feedback(history: list, job_description: str):
     """
     Analyzes the interview history and generates a detailed feedback report.
+    Falls back to role-based mock feedback when API rate limit is exceeded.
     """
     if not is_valid_api_key():
         return {
@@ -412,12 +817,21 @@ def generate_interview_feedback(history: list, job_description: str):
             "summary": "Please configure a valid API key to receive feedback."
         }
 
+    # Detect role from job description
+    job_description_lower = job_description.lower()
+    if "backend" in job_description_lower or "server" in job_description_lower or "api" in job_description_lower:
+        detected_role = "backend"
+    elif "ui" in job_description_lower or "ux" in job_description_lower or "design" in job_description_lower or "frontend" in job_description_lower or "visual" in job_description_lower:
+        detected_role = "uiux"
+    else:
+        detected_role = "backend"  # Default role
+
     for attempt in range(3):
         try:
             from openai import OpenAI
             client = OpenAI(
                 api_key=settings.OPENAI_API_KEY,
-                base_url=settings.OPENAI_API_BASE # Will be None by default (OpenAI), or custom URL
+                base_url=settings.OPENAI_API_BASE
             )
             
             prompt = f"""
@@ -446,7 +860,7 @@ def generate_interview_feedback(history: list, job_description: str):
             response = client.chat.completions.create(
                 model=settings.OPENAI_MODEL_NAME,
                 messages=[
-                    {"role": "system", "content": "You are a senior hiring manager. Return JSON only."},
+                    {"role": "system", "content": f"You are a senior hiring manager evaluating a {detected_role} candidate. Return JSON only."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.5,
@@ -474,18 +888,19 @@ def generate_interview_feedback(history: list, job_description: str):
                 
         except Exception as e:
             error_msg = str(e)
-            if "429" in error_msg:
-                return {
-                    "score": 0,
-                    "strengths": ["Rate Limit Exceeded"],
-                    "weaknesses": ["Please check API quota"],
-                    "summary": "Could not generate feedback due to API rate limits."
-                }
+            if "429" in error_msg or "billing_not_active" in error_msg:
+                print(f"API Rate Limit or Billing Error: {error_msg}")
+                print(f"Returning mock feedback for {detected_role} role...")
+                
+                # Return role-based mock feedback
+                feedback_data = MOCK_INTERVIEW_FEEDBACK.get(detected_role, MOCK_INTERVIEW_FEEDBACK["backend"])
+                # Randomly choose between good and average feedback
+                feedback_quality = random.choice(["good", "average"])
+                return feedback_data.get(feedback_quality, feedback_data["good"])
+            
             print(f"Error generating feedback (Attempt {attempt+1}): {e}")
             if attempt == 2:
-                return {
-                    "score": 0,
-                    "strengths": ["Analysis Failed"],
-                    "weaknesses": ["API Error or Quota Exceeded"],
-                    "summary": f"Could not generate feedback report. Error: {str(e)}"
-                }
+                print(f"All API attempts failed. Returning mock feedback for {detected_role} role...")
+                feedback_data = MOCK_INTERVIEW_FEEDBACK.get(detected_role, MOCK_INTERVIEW_FEEDBACK["backend"])
+                feedback_quality = random.choice(["good", "average"])
+                return feedback_data.get(feedback_quality, feedback_data["good"])

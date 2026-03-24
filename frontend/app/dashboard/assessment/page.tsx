@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import api from "@/lib/api"
-import { Loader2, CheckCircle, XCircle, RefreshCw } from "lucide-react"
+import { Loader2, CheckCircle, XCircle, RefreshCw, AlertCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 
@@ -19,6 +19,15 @@ interface Question {
     correct_answer?: string
 }
 
+interface SubmissionResult {
+    question: string
+    user_answer: string
+    correct_answer: string
+    is_correct: boolean
+    category: string
+    explanation?: string
+}
+
 export default function AssessmentPage() {
     const [questions, setQuestions] = useState<Question[]>([])
     const [loading, setLoading] = useState(true)
@@ -26,6 +35,7 @@ export default function AssessmentPage() {
     const [submitted, setSubmitted] = useState(false)
     const [score, setScore] = useState<number | null>(null)
     const [submitting, setSubmitting] = useState(false)
+    const [results, setResults] = useState<SubmissionResult[]>([])
 
     const [error, setError] = useState<string | null>(null)
 
@@ -34,6 +44,7 @@ export default function AssessmentPage() {
         setSubmitted(false)
         setScore(null)
         setResponses({})
+        setResults([])
         setError(null)
         try {
             const res = await api.get(`/assessment/daily${refresh ? '?refresh=true' : ''}`)
@@ -58,12 +69,9 @@ export default function AssessmentPage() {
     const handleSubmit = async () => {
         setSubmitting(true)
         try {
-            // Calculate score locally for instant feedback or use backend return
-            // For this implementation, we'll rely on the backend for the official score
-            // but use local state for the visual feedback since we have the correct answers.
-
             const res = await api.post("/assessment/submit", { responses })
             setScore(res.data.score)
+            setResults(res.data.results || [])
             setSubmitted(true)
             window.scrollTo({ top: 0, behavior: 'smooth' })
         } catch (error) {
@@ -159,66 +167,93 @@ export default function AssessmentPage() {
                                             </CardHeader>
                                             <CardContent>
                                                 {question.type === "mcq" ? (
-                                                    <RadioGroup
-                                                        value={userAnswer}
-                                                        onValueChange={(val) => !submitted && handleResponseChange(index, val)}
-                                                        className="space-y-3"
-                                                    >
-                                                        {question.options.map((option, optIndex) => {
-                                                            let optionStyle = "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                                    <>
+                                                        <RadioGroup
+                                                            value={userAnswer}
+                                                            onValueChange={(val) => !submitted && handleResponseChange(index, val)}
+                                                            className="space-y-3"
+                                                        >
+                                                            {question.options.map((option, optIndex) => {
+                                                                let optionStyle = "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
 
-                                                            if (submitted) {
-                                                                if (option === question.correct_answer) {
-                                                                    optionStyle = "border-green-500 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-medium"
-                                                                } else if (option === userAnswer && !isCorrect) {
-                                                                    optionStyle = "border-red-500 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-                                                                } else {
-                                                                    optionStyle = "opacity-60"
+                                                                if (submitted) {
+                                                                    if (option === question.correct_answer) {
+                                                                        optionStyle = "border-green-500 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-medium"
+                                                                    } else if (option === userAnswer && !isCorrect) {
+                                                                        optionStyle = "border-red-500 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                                                                    } else {
+                                                                        optionStyle = "opacity-60"
+                                                                    }
                                                                 }
-                                                            }
 
-                                                            return (
-                                                                <div
-                                                                    key={optIndex}
-                                                                    onClick={() => !submitted && handleResponseChange(index, option)}
-                                                                    className={cn(
-                                                                        "flex items-center space-x-3 border rounded-lg p-4 transition-all cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800",
-                                                                        optionStyle,
-                                                                        !submitted && userAnswer === option && "border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500"
-                                                                    )}>
-                                                                    <RadioGroupItem
-                                                                        value={option}
-                                                                        id={`q${index}-opt${optIndex}`}
-                                                                        disabled={submitted}
-                                                                        className="mt-0.5" // Align with text top if multi-line
-                                                                    />
-                                                                    <Label
-                                                                        htmlFor={`q${index}-opt${optIndex}`}
-                                                                        className="flex-1 cursor-pointer text-base leading-relaxed pointer-events-none flex items-center justify-between" // pointer-events-none to let div handle click
-                                                                    >
-                                                                        <span>{option}</span>
+                                                                return (
+                                                                    <div
+                                                                        key={optIndex}
+                                                                        onClick={() => !submitted && handleResponseChange(index, option)}
+                                                                        className={cn(
+                                                                            "flex items-center space-x-3 border rounded-lg p-4 transition-all cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800",
+                                                                            optionStyle,
+                                                                            !submitted && userAnswer === option && "border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500"
+                                                                        )}>
+                                                                        <RadioGroupItem
+                                                                            value={option}
+                                                                            id={`q${index}-opt${optIndex}`}
+                                                                            disabled={submitted}
+                                                                            className="mt-0.5" // Align with text top if multi-line
+                                                                        />
+                                                                        <Label
+                                                                            htmlFor={`q${index}-opt${optIndex}`}
+                                                                            className="flex-1 cursor-pointer text-base leading-relaxed pointer-events-none flex items-center justify-between" // pointer-events-none to let div handle click
+                                                                        >
+                                                                            <span>{option}</span>
+                                                                            {submitted && option === question.correct_answer && (
+                                                                                <span className="ml-2 text-xs bg-green-600 text-white px-2 py-1 rounded-full font-bold shadow-sm">
+                                                                                    Correct Answer
+                                                                                </span>
+                                                                            )}
+                                                                            {submitted && option === userAnswer && !isCorrect && (
+                                                                                <span className="ml-2 text-xs bg-red-600 text-white px-2 py-1 rounded-full font-bold shadow-sm">
+                                                                                    Your Answer
+                                                                                </span>
+                                                                            )}
+                                                                        </Label>
+                                                                        {/* Icons kept for extra visual cue */}
                                                                         {submitted && option === question.correct_answer && (
-                                                                            <span className="ml-2 text-xs bg-green-600 text-white px-2 py-1 rounded-full font-bold shadow-sm">
-                                                                                Correct Answer
-                                                                            </span>
+                                                                            <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
                                                                         )}
                                                                         {submitted && option === userAnswer && !isCorrect && (
-                                                                            <span className="ml-2 text-xs bg-red-600 text-white px-2 py-1 rounded-full font-bold shadow-sm">
-                                                                                Your Answer
-                                                                            </span>
+                                                                            <XCircle className="h-5 w-5 text-red-600 shrink-0" />
                                                                         )}
-                                                                    </Label>
-                                                                    {/* Icons kept for extra visual cue */}
-                                                                    {submitted && option === question.correct_answer && (
-                                                                        <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
-                                                                    )}
-                                                                    {submitted && option === userAnswer && !isCorrect && (
-                                                                        <XCircle className="h-5 w-5 text-red-600 shrink-0" />
-                                                                    )}
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </RadioGroup>
+                                                        {submitted && !isCorrect && userAnswer && (
+                                                            <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-l-4 border-amber-400 flex gap-3">
+                                                                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                                                <div className="flex-1">
+                                                                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">Incorrect Answer</p>
+                                                                    <p className="text-sm text-amber-700 dark:text-amber-200">
+                                                                        You selected: <strong>{userAnswer}</strong>
+                                                                    </p>
+                                                                    <p className="text-sm text-amber-700 dark:text-amber-200 mt-1">
+                                                                        Correct answer: <strong>{question.correct_answer}</strong>
+                                                                    </p>
                                                                 </div>
-                                                            )
-                                                        })}
-                                                    </RadioGroup>
+                                                            </div>
+                                                        )}
+                                                        {submitted && !isCorrect && !userAnswer && (
+                                                            <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-l-4 border-amber-400 flex gap-3">
+                                                                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                                                <div className="flex-1">
+                                                                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">No Answer Selected</p>
+                                                                    <p className="text-sm text-amber-700 dark:text-amber-200">
+                                                                        Correct answer: <strong>{question.correct_answer}</strong>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </>
                                                 ) : (
                                                     <div className="space-y-4">
                                                         <Textarea
